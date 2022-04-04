@@ -8,19 +8,17 @@ let platforms = [];
 let enemies = [];
 let ladders = [];
 
-let gravity = 5;
+let gravity = 10;
 
 let platform = {
     x: platforms.x,
     y: platforms.y,
     width: platforms.width,
     height: platforms.height
-
-}
+};
 
 let player = {
-    x: 10,
-    y: 620,
+    jumping: false,
     width: 48,
     height: 48,
     frameX: 0,
@@ -28,8 +26,9 @@ let player = {
     speed: 9,
     velocity_x: 0,
     velocity_y: 1,
-    moving: false,
-    jumping: true
+    x: 10,
+    y: 620,
+    moving: false
 };
 
 let enemy = {
@@ -40,10 +39,11 @@ let enemy = {
     frameX: 0,
     frameY: 0,
     speed: 9,
-    // velocity_y: 5,
-    // gravity: 1,
+    velocity_y: 5,
+    gravity: 1,
     moving: true
 };
+
 
 let playerSprite = new Image();
 playerSprite.src = "assets/characters.png"; 
@@ -102,39 +102,38 @@ function drawPlatform(img, sX, sY, sW, sH, dX, dY, dW, dH) {
 window.addEventListener("keydown", function(e) {
     keys[e.keyCode] = true;
     player.moving = true;
-    // enemy.moving = true; 
     player.jumping = true;
 });
 window.addEventListener("keyup", function(e) {
     delete keys[e.keyCode];
     player.moving = false;
-    // enemy.moving = false;
     player.jumping = false;
 });
 
 function moveEnemy() {
-    
-    if (enemy.x >= 0 && enemy.x <= 650) {
-        enemy.x -= enemy.speed;
-        enemy.frameY = 0;
+    // enemies.x -= enemies.speed;
+    //     enemies.frameY = 0;
 
-        console.log('left');
-    }
+    //     console.log('left');
+    // }
     // if (enemy.y < canvas.height - enemy.height) {
     //     enemy.y += enemy.speed;
     //     enemy.frameY = 0;
     //     enemy.moving = true;
     //     console.log('down');
     // }
-    // if (enemy.x < canvas.width - enemy.width) {
-    //     enemy.x += enemy.speed;
-    //     enemy.frameY = 0;
-    //     enemy.moving = true;
-    //     console.log('right');
-    // }
-}
+    if (enemy.x < canvas.width - enemy.width) {
+        enemy.x += enemy.speed;
+        enemy.frameY = 0;
+        
+        console.log('right');
+    }};
 
 function movePlayer() {
+    if (player.x >= 220 && player.x <= 400){
+        player.y += gravity
+    }
+
     if (keys[38] ) {
         // && player.x >= ladders.x && 
         // player.x <= (ladders.x + ladders.width) && 
@@ -150,7 +149,7 @@ function movePlayer() {
         player.moving = true;
         console.log('left');
     }
-    if (keys[40] && player.y < canvas.height - player.height) {
+    if (keys[40] && player.y <= 0 ) {
         player.y += player.speed;
         player.frameY = 4;
         player.moving = true;
@@ -163,7 +162,7 @@ function movePlayer() {
         console.log('right');
     }
     if (keys[32] && player.jumping == false) {
-        player.y += gravity
+        player.y -= gravity
         player.frameY = 2;
         player.moving = true;
         player.jumping = true;
@@ -180,13 +179,14 @@ function handleEnemyFrame() {
     else enemy.frameX = 0;
 }
 
-// function touchGround(platform){
-//     if (player.x > platform.x + platform.width) return false;
-//     if (player.x + player.width < platform.x) return false;
-//     if (player.y > platform.y + platform.height) return false;
-//     if (player.y + player.height < platform.y) return false;
-//         return true;
-// }
+function touchGround(){
+    if (player.x > platform.x + platform.width) return false;
+    if (player.x + player.width < platform.x) return false;
+    if (player.y > platform.y + platform.height) return false;
+    if (player.y + player.height < platform.y) return false;
+        return true;
+}
+console.log('snerting');
 // if (player.touchGround(platform)) 
 // player.velocity_y = 0;
 
@@ -208,7 +208,7 @@ function animate() {
         then = now - (elapsed % fpsInterval);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        player.y += gravity
+        // player.y += gravity
 
         platforms[
             ctx.drawImage(btmLvlLeft, 0, 670, 256, 32),
