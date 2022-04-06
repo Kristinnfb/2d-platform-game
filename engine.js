@@ -1,13 +1,19 @@
+//--- config  ---//
 const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
-canvas.width = 650;
-canvas.height = 700;
 
+function setCanvas(){
+    canvas.width = 650;
+    canvas.height = 700;
+}
+
+window.addEventListener('resize', setCanvas());
+
+//--- data  ---//
 const keys = [];
 let platforms = [];
 let enemies = [];
 let ladders = [];
-
 let gravity = 10;
 
 let platform = {
@@ -45,42 +51,56 @@ let enemy = {
 };
 
 
+
+
+//--- images  ---//
 let playerSprite = new Image();
-playerSprite.src = "assets/characters.png"; 
-
 let enemySprite = new Image();
-enemySprite.src = "assets/Enemy.png"; 
 
+let btmLvlLeft = new Image();
+let btmLvlRight = new Image();
+let lvlTwoLeft = new Image();
+let lvlTwoRight = new Image();
+let lvlThree = new Image();
+let lvlFour = new Image();
+let lvlFive = new Image();
+let lvlSix = new Image();
+let topLvl = new Image();
+let skyTwo = new Image();
+let skyOne = new Image();
+let scoreBoard = new Image();
+let door = new Image();
+let ladder = new Image();
+
+function loadPlayer(){
+    playerSprite.src = "assets/characters.png"; 
+}
+loadPlayer();
+
+function loadEnemy(){
+    enemySprite.src = "assets/Enemy.png"; 
+}
+loadEnemy();
 
 // Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
-let btmLvlLeft = new Image();
-btmLvlLeft.src = "assets/bottom-level-left.png";
-let btmLvlRight = new Image();
-btmLvlRight.src = "assets/bottom-level-right.png";
-let lvlTwoLeft = new Image();
-lvlTwoLeft.src = "assets/level-two-left.png";
-let lvlTwoRight = new Image();
-lvlTwoRight.src = "assets/level-two-right-floor.png";
-let lvlThree = new Image();
-lvlThree.src = "assets/level-three.png";
-let lvlFour = new Image();
-lvlFour.src = "assets/level-four.png";
-let lvlFive = new Image();
-lvlFive.src = "assets/level-five.png";
-let lvlSix = new Image();
-lvlSix.src = "assets/level-six.png";
-let topLvl = new Image();
-topLvl.src = "assets/top-level-floor.png";
-let skyTwo = new Image();
-skyTwo.src = "assets/sky-2.png";
-let skyOne = new Image();
-skyOne.src = "assets/sky-1.png";
-let scoreBoard = new Image();
-scoreBoard.src = "assets/score-board.png";
-let door = new Image();
-door.src = "assets/door.png";
-let ladder = new Image();
-ladder.src = "assets/stairs.png"; 
+function loadPlatform(){
+    btmLvlLeft.src = "assets/bottom-level-left.png";
+    btmLvlRight.src = "assets/bottom-level-right.png";
+    lvlTwoLeft.src = "assets/level-two-left.png";
+    lvlTwoRight.src = "assets/level-two-right-floor.png";
+    lvlThree.src = "assets/level-three.png";
+    lvlFour.src = "assets/level-four.png";
+    lvlFive.src = "assets/level-five.png";
+    lvlSix.src = "assets/level-six.png";
+    topLvl.src = "assets/top-level-floor.png";
+    skyTwo.src = "assets/sky-2.png";
+    skyOne.src = "assets/sky-1.png";
+    scoreBoard.src = "assets/score-board.png";
+    door.src = "assets/door.png";
+    ladder.src = "assets/stairs.png";
+}
+loadPlatform();
+ 
 
 function drawPlayer(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
