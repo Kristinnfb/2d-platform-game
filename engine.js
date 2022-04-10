@@ -17,6 +17,9 @@ platformImage.src = "assets/level-two-left.png";
 let ladderImage = new Image();
 ladderImage.src = "assets/stairs.png";
 
+let doorImage = new Image();
+doorImage.src = "assets/door.png";
+
 let playerSprite = new Image();
 playerSprite.src = "assets/characters.png";
 
@@ -29,8 +32,7 @@ let skyOne = new Image();
 skyOne.src = "assets/sky-1.png";
 let scoreBoard = new Image();
 scoreBoard.src = "assets/score-board.png";
-let door = new Image();
-door.src = "assets/door.png";
+
 
 
 //--- data variables  ---//
@@ -193,6 +195,7 @@ function drawBackground() {
 function drawPlatform() {
     drawGrounds();
     drawLadders();
+    drawEntities();
 }
 
 function drawGrounds() {
@@ -225,6 +228,16 @@ function drawLadders() {
             height
         );
     });
+}
+
+function drawEntities(){
+    ctx.drawImage(
+        doorImage,
+        canvasWidth * 0.05,
+        getYByLevel(platformMaxLevel),
+        width,
+        height
+    );
 }
 
 // responsive values
