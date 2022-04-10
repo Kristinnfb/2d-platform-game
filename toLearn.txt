@@ -1,0 +1,1 @@
+do not set canvas with & height from stylesheet when game development.use javascript or HTML attribute for that.

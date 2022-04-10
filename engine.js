@@ -1,21 +1,83 @@
 //--- config  ---//
-const canvas = document.getElementById('canvas1');
-const ctx = canvas.getContext('2d');
+window.addEventListener('load', () => {
+    canvas = document.getElementById('canvas1');
+    ctx = canvas.getContext('2d');
+    initiateWindow();
+});
 
-function setCanvas(){
-    canvas.width = 650;
-    canvas.height = 700;
-}
+window.addEventListener('resize', initiateWindow);
 
-window.addEventListener('resize', setCanvas());
 
-//--- data  ---//
+
+//--- data variables  ---//
+let canvas, ctx;
+let canvasWidth, canvasHeight, windowWidth, windowHeight;
+const canvasRatio = 650 / 700; //  background image width / height
+const platformMaxLevel = 5;
+const platformTopMarginRatio = canvas
+let platforms = [
+    {
+        //btm left
+        x:0,
+        level:1,
+        y:542,
+        width:96,
+        height:32
+    },
+    {
+        //btm right
+        x:202,
+        level:1,
+        // y:542,
+        width:448,
+        height:32
+    },
+    {
+        // one left
+        x:0,
+        level:2,
+        // y:422,
+        width:480,
+        height:32
+    },
+    {
+        // two right
+        x:522,
+        level:2,
+        // y:358,
+        width:64,
+        height:32
+    },
+    {
+        // three left
+        x:0,
+        level:3,
+        // y:294,
+        width:224,
+        height:32
+    },
+    {
+        // four left
+        x:332,
+        level:4,
+        // y:230,
+        width:224,
+        height:32
+    },
+    {
+        // top
+        x:0,
+        level:5,
+        // y:100,
+        width:650,
+        height:32
+    },
+];
+
 const keys = [];
-let platforms = [];
 let enemies = [];
 let ladders = [];
 let gravity = 10;
-
 let platform = {
     x: platforms.x,
     y: platforms.y,
@@ -50,57 +112,89 @@ let enemy = {
     moving: true
 };
 
+// initiate
+function initiateWindow() {
+    setDimensions();
+    setCanvas();
+    drawBackground();
+    drawPlatform();
+}
+
+function setDimensions() {
+    //set window dimensions
+    windowHeight = window.innerHeight;
+    windowWidth = window.innerWidth;
+
+    //set canvas dimensions
+    canvasWidth = windowWidth * 0.48;
+    canvasHeight = canvasWidth * canvasRatio;
+}
+
+function setCanvas() {
+    if (!canvas) return false;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+}
+
 
 
 
 //--- images  ---//
+let backgroundImage = new Image();
+backgroundImage.src = "./assets/background2.png";
+
+let platformImage = new Image();
+platformImage.src = "assets/level-two-left.png";
+
 let playerSprite = new Image();
+playerSprite.src = "assets/characters.png";
+
 let enemySprite = new Image();
+enemySprite.src = "assets/Enemy.png";
 
-let btmLvlLeft = new Image();
-let btmLvlRight = new Image();
-let lvlTwoLeft = new Image();
-let lvlTwoRight = new Image();
-let lvlThree = new Image();
-let lvlFour = new Image();
-let lvlFive = new Image();
-let lvlSix = new Image();
-let topLvl = new Image();
 let skyTwo = new Image();
+skyTwo.src = "assets/sky-2.png";
 let skyOne = new Image();
+skyOne.src = "assets/sky-1.png";
 let scoreBoard = new Image();
+scoreBoard.src = "assets/score-board.png";
 let door = new Image();
+door.src = "assets/door.png";
 let ladder = new Image();
+ladder.src = "assets/stairs.png"; 
 
-function loadPlayer(){
-    playerSprite.src = "assets/characters.png"; 
-}
-loadPlayer();
 
-function loadEnemy(){
-    enemySprite.src = "assets/Enemy.png"; 
+function drawBackground() {
+    ctx.drawImage(
+        backgroundImage,
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+    );
 }
-loadEnemy();
+
+function drawPlatform() {
+    platforms.forEach((item,index) =>{
+        let level = getHeightByLevel(item.level);
+        ctx.drawImage(
+            platformImage,
+            item.x,
+            level,
+            item.width,
+            item.height
+        );
+    });
+    
+}
+
+function getHeightByLevel(level){
+    return canvasHeight - (canvasHeight / platformMaxLevel * level) + platformTopMargin;
+}
+
 
 // Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
-function loadPlatform(){
-    btmLvlLeft.src = "assets/bottom-level-left.png";
-    btmLvlRight.src = "assets/bottom-level-right.png";
-    lvlTwoLeft.src = "assets/level-two-left.png";
-    lvlTwoRight.src = "assets/level-two-right-floor.png";
-    lvlThree.src = "assets/level-three.png";
-    lvlFour.src = "assets/level-four.png";
-    lvlFive.src = "assets/level-five.png";
-    lvlSix.src = "assets/level-six.png";
-    topLvl.src = "assets/top-level-floor.png";
-    skyTwo.src = "assets/sky-2.png";
-    skyOne.src = "assets/sky-1.png";
-    scoreBoard.src = "assets/score-board.png";
-    door.src = "assets/door.png";
-    ladder.src = "assets/stairs.png";
-}
-loadPlatform();
- 
+
 
 function drawPlayer(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
@@ -111,20 +205,18 @@ function drawEnemy(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 }
 
-function drawPlatform(img, sX, sY, sW, sH, dX, dY, dW, dH) {
-    ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
-}
+
 
 // function drawLadder(img, sX, sY, sW, sH, dX, dY, dW, dH) {
 //     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 // }
 
-window.addEventListener("keydown", function(e) {
+window.addEventListener("keydown", function (e) {
     keys[e.keyCode] = true;
     player.moving = true;
     player.jumping = true;
 });
-window.addEventListener("keyup", function(e) {
+window.addEventListener("keyup", function (e) {
     delete keys[e.keyCode];
     player.moving = false;
     player.jumping = false;
@@ -145,16 +237,17 @@ function moveEnemy() {
     if (enemy.x < canvas.width - enemy.width) {
         enemy.x += enemy.speed;
         enemy.frameY = 0;
-        
+
         console.log('right');
-    }};
+    }
+};
 
 function movePlayer() {
-    if (player.x >= 220 && player.x <= 400){
+    if (player.x >= 220 && player.x <= 400) {
         player.y += gravity
     }
 
-    if (keys[38] ) {
+    if (keys[38]) {
         // && player.x >= ladders.x && 
         // player.x <= (ladders.x + ladders.width) && 
         // player.y === ladders.y)        
@@ -169,7 +262,7 @@ function movePlayer() {
         player.moving = true;
         console.log('left');
     }
-    if (keys[40] && player.y <= 0 ) {
+    if (keys[40] && player.y <= 0) {
         player.y += player.speed;
         player.frameY = 4;
         player.moving = true;
@@ -199,12 +292,12 @@ function handleEnemyFrame() {
     else enemy.frameX = 0;
 }
 
-function touchGround(){
+function touchGround() {
     if (player.x > platform.x + platform.width) return false;
     if (player.x + player.width < platform.x) return false;
     if (player.y > platform.y + platform.height) return false;
     if (player.y + player.height < platform.y) return false;
-        return true;
+    return true;
 }
 console.log('snerting');
 // if (player.touchGround(platform)) 
@@ -214,7 +307,7 @@ console.log('snerting');
 let fps, fpsInterval, startTime, now, then, elapsed;
 
 function startAnimating(fps) {
-    fpsInterval = 1000/fps;
+    fpsInterval = 1000 / fps;
     then = Date.now();
     startTime = then;
     animate();
@@ -226,75 +319,63 @@ function animate() {
     elapsed = now - then;
     if (elapsed > fpsInterval) {
         then = now - (elapsed % fpsInterval);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawBackground();
+        drawPlatform();
 
         // player.y += gravity
 
-        platforms[
-            ctx.drawImage(btmLvlLeft, 0, 670, 256, 32),
-            ctx.drawImage(btmLvlRight, 394, 670, 256, 32),
-            ctx.drawImage(lvlTwoLeft, 0, 542, 96, 32),
-            ctx.drawImage(lvlTwoRight, 202, 542, 448, 32),
-            ctx.drawImage(lvlThree, 0, 422, 480, 32),
-            ctx.drawImage(lvlFour, 522, 358, 64, 32),
-            ctx.drawImage(lvlFive, 0, 294, 224, 32),
-            ctx.drawImage(lvlSix, 332, 230, 224, 32),
-            ctx.drawImage(topLvl, 0, 100, 650, 32),
-            ctx.drawImage(skyTwo, 300, 340, 90, 32),
-            ctx.drawImage(skyOne, 100, 200, 90, 32),
-            ctx.drawImage(scoreBoard, 550, 20, 64, 32),
-            ctx.drawImage(door, 10, 50, 45, 50)
-        ]
         
-        ladders [
+
+        ladders[
             ctx.drawImage(ladder, 586, 542, 32, 128),
             ctx.drawImage(ladder, 459, 102, 32, 128),
             ctx.drawImage(ladder, 32, 422, 32, 128),
             ctx.drawImage(ladder, 554, 230, 32, 128)
         ]
-            
-            drawPlayer(playerSprite, 
-                        player.width * player.frameX, 
-                        player.height * player.frameY, 
-                        player.width, player.height, 
-                        player.x, player.y, player.width, player.height);
-        enemies [    
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        400, 50, enemy.width, enemy.height),
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        490, 180, enemy.width, enemy.height),
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        60, 245, enemy.width, enemy.height),
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        300, 373, enemy.width, enemy.height),
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        190, 620, enemy.width, enemy.height),
-            drawEnemy(enemySprite, 
-                        enemy.width * enemy.frameX, 
-                        enemy.height * enemy.frameY, 
-                        enemy.width, enemy.height, 
-                        500, 620, enemy.width, enemy.height)
+
+        drawPlayer(playerSprite,
+            player.width * player.frameX,
+            player.height * player.frameY,
+            player.width, player.height,
+            player.x, player.y, player.width, player.height);
+        enemies[
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                400, 50, enemy.width, enemy.height),
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                490, 180, enemy.width, enemy.height),
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                60, 245, enemy.width, enemy.height),
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                300, 373, enemy.width, enemy.height),
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                190, 620, enemy.width, enemy.height),
+            drawEnemy(enemySprite,
+                enemy.width * enemy.frameX,
+                enemy.height * enemy.frameY,
+                enemy.width, enemy.height,
+                500, 620, enemy.width, enemy.height)
         ]
-            moveEnemy();
-            movePlayer();
-            handlePlayerFrame();
-            handleEnemyFrame();
-            // touchGround();
-        }
+        moveEnemy();
+        movePlayer();
+        handlePlayerFrame();
+        handleEnemyFrame();
+        // touchGround();
     }
+}
 startAnimating(15); 
