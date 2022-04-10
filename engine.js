@@ -8,6 +8,8 @@ window.addEventListener('load', () => {
 window.addEventListener('resize', initiateWindow);
 
 //--- images  ---//
+// let scoreElement = document.createElement('span');
+
 let backgroundImage = new Image();
 backgroundImage.src = "./assets/background2.png";
 
@@ -20,8 +22,11 @@ ladderImage.src = "assets/stairs.png";
 let doorImage = new Image();
 doorImage.src = "assets/door.png";
 
-let playerSprite = new Image();
-playerSprite.src = "assets/characters.png";
+let scoreBoardImage = new Image();
+scoreBoardImage.src = "assets/score-board.png";
+
+let playerImage = new Image();
+playerImage.src = "assets/characters.png";
 
 let enemySprite = new Image();
 enemySprite.src = "assets/Enemy.png";
@@ -30,8 +35,10 @@ let skyTwo = new Image();
 skyTwo.src = "assets/sky-2.png";
 let skyOne = new Image();
 skyOne.src = "assets/sky-1.png";
-let scoreBoard = new Image();
-scoreBoard.src = "assets/score-board.png";
+
+
+
+
 
 
 
@@ -42,71 +49,66 @@ const canvasRatio = 650 / 700; //  background image width / height
 const platformMaxLevel = 6;
 const platformTopMarginRatio = 0.1127
 const ladderWidthRatio = 0.048;
+const groundHeightRatio = 0.052;
+let score = 0;
 const platforms = [
     {
         //one left
         x: 0,
         level: 1,
-        width: 0.14,
-        height: 1
+        width: 0.14
     },
     {
         //one right
         x: 0.30,
         level: 1,
-        width: 0.697,
-        height: 1
+        width: 0.697
     },
     {
         // two left
         x: 0,
         level: 2,
-        width: 0.63,
-        height: 1
+        width: 0.63
     },
     {
         // three right
         x: 0.75,
         level: 3,
-        width: 0.145,
-        height: 1
+        width: 0.145
     },
     {
         // four left
         x: 0,
         level: 4,
-        width: 0.34,
-        height: 1
+        width: 0.34
     },
     {
         // five left
         x: 0.5,
         level: 5,
-        width: 0.34,
-        height: 1
+        width: 0.34
     },
     {
         // top
         x: 0,
         level: 6,
-        width: 1,
-        height: 1
+        width: 1
     },
 ];
 
 const ladders = [
     {
-        x:0.05,
+        x: 0.05,
         form: 1,
         to: 2
     },
     {
-        x:0.79 + ladderWidthRatio,
+        x: 0.79 + ladderWidthRatio,
         form: 3,
         to: 5
     },
     {
-        x:0.6,
+        x: 0.6,
         form: 5,
         to: 6
     }
@@ -155,6 +157,8 @@ function initiateWindow() {
     setCanvas();
     drawBackground();
     drawPlatform();
+    drawPlayer();
+    // setScore();
 }
 
 function setDimensions() {
@@ -177,9 +181,10 @@ function setCanvas() {
 }
 
 
-
-
-
+// function setScore(){
+//     scoreElement.style.left = canvasWidth / 2 + 'px';
+//     scoreElement.innerHTML = 'dddddddddddddddddddddddddddddddddddd';
+// }
 
 
 function drawBackground() {
@@ -195,7 +200,8 @@ function drawBackground() {
 function drawPlatform() {
     drawGrounds();
     drawLadders();
-    drawEntities();
+    drawDoor();
+    drawScoreBoard();
 }
 
 function drawGrounds() {
@@ -203,7 +209,7 @@ function drawGrounds() {
         let x = getXByRatio(item.x);
         let y = getYByLevel(item.level);
         let width = getWidthByRatio(item.width);
-        let height = getHeightByRatio(item.height);
+        let height = getHeightByRatio();
         ctx.drawImage(
             platformImage,
             x,
@@ -219,7 +225,7 @@ function drawLadders() {
         let x = getLadderX(item.x);
         let y = getLadderY(item.form);
         let width = getLadderWidth();
-        let height = getLadderHeight(item.form,item.to);
+        let height = getLadderHeight(item.form, item.to);
         ctx.drawImage(
             ladderImage,
             x,
@@ -230,13 +236,40 @@ function drawLadders() {
     });
 }
 
-function drawEntities(){
+function drawDoor() {
+    let ratio = doorImage.height / doorImage.width;
+    let width = canvasWidth * 0.0763;
+    let height = width * ratio;
     ctx.drawImage(
         doorImage,
         canvasWidth * 0.05,
-        getYByLevel(platformMaxLevel),
+        getYByLevel(platformMaxLevel) - height,
         width,
         height
+    );
+}
+
+function drawScoreBoard() {
+    let ratio = scoreBoardImage.height / scoreBoardImage.width;
+    let width = canvasWidth * 0.0763;
+    let height = width * ratio;
+
+    ctx.drawImage(
+        scoreBoardImage,
+        canvasWidth * 0.9,
+        0,
+        width,
+        height
+    );
+}
+
+function drawPlayer() {
+    ctx.drawImage(
+        playerImage,
+        player.width * player.frameX,
+        player.height * player.frameY,
+        player.width, player.height,
+        player.x, player.y, player.width, player.height
     );
 }
 
@@ -253,33 +286,30 @@ function getWidthByRatio(width) {
     return canvasWidth * width;
 }
 
-function getHeightByRatio(height) {
-    return canvasHeight * height * 0.052;
+function getHeightByRatio() {
+    return canvasHeight * groundHeightRatio;
 }
 
-function getLadderX(x){
+function getLadderX(x) {
     return canvasWidth * x;
 }
 
-function getLadderY(from){
+function getLadderY(from) {
     return getYByLevel(from);
 }
 
-function getLadderWidth(){
+function getLadderWidth() {
     return canvasWidth * ladderWidthRatio;
 }
 
-function getLadderHeight(from,to){
+function getLadderHeight(from, to) {
     return getYByLevel(to) - getYByLevel(from);
 }
 
 
 
-// Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
-function drawPlayer(img, sX, sY, sW, sH, dX, dY, dW, dH) {
-    ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 
-}
+// Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
 
 function drawEnemy(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
@@ -402,18 +432,19 @@ function animate() {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         drawBackground();
         drawPlatform();
+        drawPlayer();
 
         // player.y += gravity
 
 
-
-        
 
         drawPlayer(playerSprite,
             player.width * player.frameX,
             player.height * player.frameY,
             player.width, player.height,
             player.x, player.y, player.width, player.height);
+
+
         enemies[
             drawEnemy(enemySprite,
                 enemy.width * enemy.frameX,

@@ -5,4 +5,9 @@ canvas {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-} 
+}
+
+/* #score {
+    position: absolute;
+    z-index: 5000;
+} */
