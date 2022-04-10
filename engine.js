@@ -46,6 +46,7 @@ const platformMaxLevel = 6;
 const platformTopMarginRatio = 0.1127
 const ladderWidthRatio = 0.048;
 const groundHeightRatio = 0.052;
+let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
 let enemyHeight = 0;
@@ -55,7 +56,7 @@ let win = false;
 
 //classes
 class Enemy {
-    constructor(x, y,maxLeft,maxRight) {
+    constructor(x, y, maxLeft, maxRight) {
         this.x = x;
         this.y = y;
         this.speed = randomSpeed(2, 5);
@@ -145,26 +146,26 @@ const enemyPositions = [
     {
         x: 0.1,
         level: 2,
-        min:0,
-        max:0.63
+        min: 0,
+        max: 0.63
     },
     {
         x: 0.05,
         level: 4,
-        min:0,
-        max:0.34
+        min: 0,
+        max: 0.34
     },
     {
         x: 0.52,
         level: 5,
-        min:0.5,
-        max:0.34 + 0.5
+        min: 0.5,
+        max: 0.34 + 0.5
     },
     {
         x: 0.4,
         level: 6,
-        min:0,
-        max:1
+        min: 0,
+        max: 1
     }
 ];
 
@@ -221,6 +222,7 @@ function initiateWindow() {
     drawPlatform();
     drawPlayer();
     drawEnemies();
+    animate();
 }
 
 function setDimensions() {
@@ -320,8 +322,9 @@ function drawLadders() {
 }
 
 function drawEnemies() {
+    enemies = [];
     enemyPositions.forEach((item, index) => {
-        let enemyObject = new Enemy(getEnemyX(item.x), getEnemyY(item.level),getDistanceByCanvasWidth(item.min),getDistanceByCanvasWidth(item.max));
+        let enemyObject = new Enemy(getEnemyX(item.x), getEnemyY(item.level), getDistanceByCanvasWidth(item.min), getDistanceByCanvasWidth(item.max));
         enemyObject.move();
         enemies.push(enemyObject);
     });
@@ -395,7 +398,7 @@ function getYByLevel(level) {
     return canvasHeight - (canvasHeight / platformMaxLevel * level) + (canvasHeight * platformTopMarginRatio);
 }
 
-function getDistanceByCanvasWidth(value){
+function getDistanceByCanvasWidth(value) {
     return canvasWidth * value;
 }
 
@@ -452,25 +455,6 @@ window.addEventListener("keyup", function (e) {
     player.jumping = false;
 });
 
-function moveEnemy() {
-    // enemies.x -= enemies.speed;
-    //     enemies.frameY = 0;
-
-    //     console.log('left');
-    // }
-    // if (enemy.y < canvas.height - enemy.height) {
-    //     enemy.y += enemy.speed;
-    //     enemy.frameY = 0;
-    //     enemy.moving = true;
-    //     console.log('down');
-    // }
-    if (enemy.x < canvas.width - enemy.width) {
-        enemy.x += enemy.speed;
-        enemy.frameY = 0;
-
-        console.log('right');
-    }
-};
 
 function movePlayer() {
     if (player.x >= 220 && player.x <= 400) {
@@ -529,79 +513,55 @@ function touchGround() {
     if (player.y + player.height < platform.y) return false;
     return true;
 }
-console.log('snerting');
-// if (player.touchGround(platform)) 
-// player.velocity_y = 0;
-
-
-let fps, fpsInterval, startTime, now, then, elapsed;
-
-function startAnimating(fps) {
-    fpsInterval = 1000 / fps;
-    then = Date.now();
-    startTime = then;
-    animate();
-}
 
 function animate() {
-    requestAnimationFrame(animate);
-    now = Date.now();
-    elapsed = now - then;
-    if (elapsed > fpsInterval) {
-        then = now - (elapsed % fpsInterval);
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        drawBackground();
-        drawPlatform();
-        drawPlayer();
-        moveEnemies();
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    drawBackground();
+    drawPlatform();
+    drawPlayer();
+    moveEnemies();
+    movePlayer();
+    handlePlayerFrame();
+    handleEnemyFrame();
+    let result = checkEnd();
+    if (result) {
+        // stop animation when player wins or loose
+        cancelAnimationFrame(animationId);
+        if (result == "win") {
+            showWinAlert();
+        } else if (result == "fail") {
+            showFail();
+        }
+        return false;
+    }
+    animationId = requestAnimationFrame(controlAnimationSpeed);
+}
 
-        // player.y += gravity
-
-
-        // enemies[
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         400, 50, enemy.width, enemy.height),
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         490, 180, enemy.width, enemy.height),
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         60, 245, enemy.width, enemy.height),
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         300, 373, enemy.width, enemy.height),
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         190, 620, enemy.width, enemy.height),
-        //     drawEnemy(enemyImage,
-        //         enemy.width * enemy.frameX,
-        //         enemy.height * enemy.frameY,
-        //         enemy.width, enemy.height,
-        //         500, 620, enemy.width, enemy.height)
-        // ]
-        moveEnemy();
-        movePlayer();
-        handlePlayerFrame();
-        handleEnemyFrame();
-        checkEnd();
-        // touchGround();
+function controlAnimationSpeed(){
+    if(animationId % 5 == 0){
+        animate();
+    }
+    else{
+        animationId = requestAnimationFrame(controlAnimationSpeed);
     }
 }
 
-function checkEnd(){
-    if(failed){
-        
+function checkEnd() {
+    if (failed) {
+        return 'fail';
+    }
+    else if (win) {
+        return 'win';
     }
 }
-startAnimating(15); 
+
+function showWinAlert() {
+    alert('win');
+    initiateWindow();
+}
+
+function showFail() {
+    alert('Failed');
+    initiateWindow();
+}
+
