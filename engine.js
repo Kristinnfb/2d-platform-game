@@ -14,19 +14,20 @@ let canvas, ctx;
 let canvasWidth, canvasHeight, windowWidth, windowHeight;
 const canvasRatio = 650 / 700; //  background image width / height
 const platformMaxLevel = 5;
-const platformTopMarginRatio = canvas
+const platformTopMarginRatio = 0.16
 let platforms = [
     {
         //btm left
         x:0,
         level:1,
-        y:542,
+        // y:542,
         width:96,
         height:32
     },
     {
         //btm right
-        x:202,
+        x:0.30,
+        // x:202,
         level:1,
         // y:542,
         width:448,
@@ -42,7 +43,7 @@ let platforms = [
     },
     {
         // two right
-        x:522,
+        x:1.18,
         level:2,
         // y:358,
         width:64,
@@ -58,7 +59,7 @@ let platforms = [
     },
     {
         // four left
-        x:332,
+        x:1.97,
         level:4,
         // y:230,
         width:224,
@@ -128,6 +129,9 @@ function setDimensions() {
     //set canvas dimensions
     canvasWidth = windowWidth * 0.48;
     canvasHeight = canvasWidth * canvasRatio;
+
+    console.log(canvasWidth);
+    console.log(canvasHeight);
 }
 
 function setCanvas() {
@@ -176,11 +180,12 @@ function drawBackground() {
 
 function drawPlatform() {
     platforms.forEach((item,index) =>{
-        let level = getHeightByLevel(item.level);
+        let x = getXByRatio(item.x);
+        let y = getYByLevel(item.level);
         ctx.drawImage(
             platformImage,
-            item.x,
-            level,
+            x,
+            y,
             item.width,
             item.height
         );
@@ -188,8 +193,12 @@ function drawPlatform() {
     
 }
 
-function getHeightByLevel(level){
-    return canvasHeight - (canvasHeight / platformMaxLevel * level) + platformTopMargin;
+function getYByLevel(level){
+    return canvasHeight - (canvasHeight / platformMaxLevel * level) + (canvasHeight * platformTopMarginRatio);
+}
+
+function getXByRatio(x){
+    return canvasWidth * x ;
 }
 
 
