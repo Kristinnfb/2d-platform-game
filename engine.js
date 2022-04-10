@@ -37,6 +37,7 @@ let skyOne = new Image();
 skyOne.src = "assets/sky-1.png";
 
 
+
 //--- data variables  ---//
 let canvas, ctx;
 let canvasWidth, canvasHeight, windowWidth, windowHeight;
@@ -46,6 +47,37 @@ const platformTopMarginRatio = 0.1127
 const ladderWidthRatio = 0.048;
 const groundHeightRatio = 0.052;
 let score = 0;
+let enemyWidth = 0;
+let enemyHeight = 0;
+let enemies = [];
+let failed = false;
+let win = false;
+
+//classes
+class Enemy {
+    constructor(x, y,maxLeft,maxRight) {
+        this.x = x;
+        this.y = y;
+        this.speed = randomSpeed(2, 5);
+        this.moving = true;
+        this.direction = 1;
+        this.maxLeft = maxLeft;
+        this.maxRight = maxRight;
+        this.responsiveWidth = enemyWidth;
+        this.responsiveHeight = enemyHeight;
+    }
+
+    move() {
+        if (this.moving) {
+            this.x += this.speed * this.direction;
+            if (this.x >= (this.maxRight - enemyWidth) || this.x <= this.maxLeft) {
+                this.direction *= -1;
+            }
+        }
+        drawEnemy(this.x, this.y);
+    }
+}
+
 const platforms = [
     {
         //one left
@@ -109,8 +141,34 @@ const ladders = [
     }
 ];
 
+const enemyPositions = [
+    {
+        x: 0.1,
+        level: 2,
+        min:0,
+        max:0.63
+    },
+    {
+        x: 0.05,
+        level: 4,
+        min:0,
+        max:0.34
+    },
+    {
+        x: 0.52,
+        level: 5,
+        min:0.5,
+        max:0.34 + 0.5
+    },
+    {
+        x: 0.4,
+        level: 6,
+        min:0,
+        max:1
+    }
+];
+
 const keys = [];
-let enemies = [];
 let gravity = 10;
 let platform = {
     x: platforms.x,
@@ -130,8 +188,11 @@ let player = {
     velocity_y: 1,
     x: 10,
     y: 620,
-    moving: false
+    moving: false,
+    responsiveWidth: 48,
+    responsiveHeight: 48,
 };
+
 
 let enemy = {
     x: 200,
@@ -140,20 +201,26 @@ let enemy = {
     height: 48,
     frameX: 0,
     frameY: 0,
-    speed: 9,
+    speed: 1,
     velocity_y: 5,
     gravity: 1,
-    moving: true
+    moving: true,
+    responsiveWidth: 48,
+    responsiveHeight: 48,
 };
+
+
 
 // initiate
 function initiateWindow() {
     setDimensions();
     setCanvas();
+    setPlayerResponsive();
+    setEnemyResponsive();
     drawBackground();
     drawPlatform();
     drawPlayer();
-    // setScore();
+    drawEnemies();
 }
 
 function setDimensions() {
@@ -173,6 +240,27 @@ function setCanvas() {
     if (!canvas) return false;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+}
+
+function randomSpeed(min, max) { // min and max included 
+    return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+
+function setPlayerResponsive() {
+    let ratio = playerImage.height / playerImage.width;
+    let width = canvasWidth * 0.12;
+    let height = width * ratio;
+    player.responsiveWidth = width;
+    player.responsiveHeight = height;
+}
+
+function setEnemyResponsive() {
+    let ratio = enemyImage.height / enemyImage.width;
+    let width = canvasWidth * 0.07;
+    let height = width * ratio * 3;
+    enemyWidth = width;
+    enemyHeight = height;
 }
 
 
@@ -231,6 +319,34 @@ function drawLadders() {
     });
 }
 
+function drawEnemies() {
+    enemyPositions.forEach((item, index) => {
+        let enemyObject = new Enemy(getEnemyX(item.x), getEnemyY(item.level),getDistanceByCanvasWidth(item.min),getDistanceByCanvasWidth(item.max));
+        enemyObject.move();
+        enemies.push(enemyObject);
+    });
+}
+
+function moveEnemies() {
+    enemies.forEach((item, index) => {
+        item.move();
+    });
+}
+
+function drawEnemy(x, y) {
+    ctx.drawImage(
+        enemyImage,
+        enemy.width * enemy.frameX,
+        enemy.height * enemy.frameY,
+        enemy.width,
+        enemy.height,
+        x,
+        y,
+        enemy.responsiveWidth,
+        enemy.responsiveHeight
+    );
+}
+
 function drawDoor() {
     let ratio = doorImage.height / doorImage.width;
     let width = canvasWidth * 0.0763;
@@ -259,52 +375,36 @@ function drawScoreBoard() {
 }
 
 function drawPlayer() {
-    let ratio = playerImage.height / playerImage.width;
-    let width = canvasWidth * 0.0732;
-    let height = width * ratio;
 
     ctx.drawImage(
         playerImage,
         player.width * player.frameX,
         player.height * player.frameY,
-        width, 
-        height,
+        player.width,
+        player.height,
         player.x,
         player.y,
-        width,
-        height
+        player.responsiveWidth,
+        player.responsiveHeight
     );
 }
 
-function drawEnemy() {
-    let ratio = enemyImage.height / enemyImage.width;
-    let width = canvasWidth * 0.0732;
-    let height = width * ratio;
-
-    ctx.drawImage(
-        enemyImage,
-        enemy.width * enemy.frameX,
-        enemy.height * enemy.frameY,
-        enemy.width, 
-        enemy.height,
-        400, 
-        50, 
-        height, 
-        height
-    );
-}
 
 // responsive values
 function getYByLevel(level) {
     return canvasHeight - (canvasHeight / platformMaxLevel * level) + (canvasHeight * platformTopMarginRatio);
 }
 
+function getDistanceByCanvasWidth(value){
+    return canvasWidth * value;
+}
+
 function getXByRatio(x) {
-    return canvasWidth * x;
+    return getDistanceByCanvasWidth(x);
 }
 
 function getWidthByRatio(width) {
-    return canvasWidth * width;
+    return getDistanceByCanvasWidth(width);
 }
 
 function getHeightByRatio() {
@@ -312,7 +412,15 @@ function getHeightByRatio() {
 }
 
 function getLadderX(x) {
-    return canvasWidth * x;
+    return getDistanceByCanvasWidth(x);
+}
+
+function getEnemyX(x) {
+    return getDistanceByCanvasWidth(x);
+}
+
+function getEnemyY(level) {
+    return getYByLevel(level) - enemyHeight - 10;
 }
 
 function getLadderY(from) {
@@ -325,15 +433,6 @@ function getLadderWidth() {
 
 function getLadderHeight(from, to) {
     return getYByLevel(to) - getYByLevel(from);
-}
-
-
-
-
-// Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
-
-function drawEnemy(img, sX, sY, sW, sH, dX, dY, dW, dH) {
-    ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 }
 
 
@@ -454,47 +553,55 @@ function animate() {
         drawBackground();
         drawPlatform();
         drawPlayer();
+        moveEnemies();
 
         // player.y += gravity
 
 
-        enemies[
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                400, 50, enemy.width, enemy.height),
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                490, 180, enemy.width, enemy.height),
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                60, 245, enemy.width, enemy.height),
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                300, 373, enemy.width, enemy.height),
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                190, 620, enemy.width, enemy.height),
-            drawEnemy(enemyImage,
-                enemy.width * enemy.frameX,
-                enemy.height * enemy.frameY,
-                enemy.width, enemy.height,
-                500, 620, enemy.width, enemy.height)
-        ]
+        // enemies[
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         400, 50, enemy.width, enemy.height),
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         490, 180, enemy.width, enemy.height),
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         60, 245, enemy.width, enemy.height),
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         300, 373, enemy.width, enemy.height),
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         190, 620, enemy.width, enemy.height),
+        //     drawEnemy(enemyImage,
+        //         enemy.width * enemy.frameX,
+        //         enemy.height * enemy.frameY,
+        //         enemy.width, enemy.height,
+        //         500, 620, enemy.width, enemy.height)
+        // ]
         moveEnemy();
         movePlayer();
         handlePlayerFrame();
         handleEnemyFrame();
+        checkEnd();
         // touchGround();
+    }
+}
+
+function checkEnd(){
+    if(failed){
+        
     }
 }
 startAnimating(15); 
