@@ -28,18 +28,13 @@ scoreBoardImage.src = "assets/score-board.png";
 let playerImage = new Image();
 playerImage.src = "assets/characters.png";
 
-let enemySprite = new Image();
-enemySprite.src = "assets/Enemy.png";
+let enemyImage = new Image();
+enemyImage.src = "assets/Enemy.png";
 
 let skyTwo = new Image();
 skyTwo.src = "assets/sky-2.png";
 let skyOne = new Image();
 skyOne.src = "assets/sky-1.png";
-
-
-
-
-
 
 
 //--- data variables  ---//
@@ -264,12 +259,38 @@ function drawScoreBoard() {
 }
 
 function drawPlayer() {
+    let ratio = playerImage.height / playerImage.width;
+    let width = canvasWidth * 0.0732;
+    let height = width * ratio;
+
     ctx.drawImage(
         playerImage,
         player.width * player.frameX,
         player.height * player.frameY,
-        player.width, player.height,
-        player.x, player.y, player.width, player.height
+        width, 
+        height,
+        player.x,
+        player.y,
+        width,
+        height
+    );
+}
+
+function drawEnemy() {
+    let ratio = enemyImage.height / enemyImage.width;
+    let width = canvasWidth * 0.0732;
+    let height = width * ratio;
+
+    ctx.drawImage(
+        enemyImage,
+        enemy.width * enemy.frameX,
+        enemy.height * enemy.frameY,
+        enemy.width, 
+        enemy.height,
+        400, 
+        50, 
+        height, 
+        height
     );
 }
 
@@ -437,41 +458,33 @@ function animate() {
         // player.y += gravity
 
 
-
-        drawPlayer(playerSprite,
-            player.width * player.frameX,
-            player.height * player.frameY,
-            player.width, player.height,
-            player.x, player.y, player.width, player.height);
-
-
         enemies[
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
                 400, 50, enemy.width, enemy.height),
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
                 490, 180, enemy.width, enemy.height),
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
                 60, 245, enemy.width, enemy.height),
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
                 300, 373, enemy.width, enemy.height),
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
                 190, 620, enemy.width, enemy.height),
-            drawEnemy(enemySprite,
+            drawEnemy(enemyImage,
                 enemy.width * enemy.frameX,
                 enemy.height * enemy.frameY,
                 enemy.width, enemy.height,
