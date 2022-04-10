@@ -7,77 +7,111 @@ window.addEventListener('load', () => {
 
 window.addEventListener('resize', initiateWindow);
 
+//--- images  ---//
+let backgroundImage = new Image();
+backgroundImage.src = "./assets/background2.png";
+
+let platformImage = new Image();
+platformImage.src = "assets/level-two-left.png";
+
+let ladderImage = new Image();
+ladderImage.src = "assets/stairs.png";
+
+let playerSprite = new Image();
+playerSprite.src = "assets/characters.png";
+
+let enemySprite = new Image();
+enemySprite.src = "assets/Enemy.png";
+
+let skyTwo = new Image();
+skyTwo.src = "assets/sky-2.png";
+let skyOne = new Image();
+skyOne.src = "assets/sky-1.png";
+let scoreBoard = new Image();
+scoreBoard.src = "assets/score-board.png";
+let door = new Image();
+door.src = "assets/door.png";
 
 
 //--- data variables  ---//
 let canvas, ctx;
 let canvasWidth, canvasHeight, windowWidth, windowHeight;
 const canvasRatio = 650 / 700; //  background image width / height
-const platformMaxLevel = 5;
-const platformTopMarginRatio = 0.16
-let platforms = [
+const platformMaxLevel = 6;
+const platformTopMarginRatio = 0.1127
+const ladderWidthRatio = 0.048;
+const platforms = [
     {
-        //btm left
-        x:0,
-        level:1,
-        // y:542,
-        width:96,
-        height:32
+        //one left
+        x: 0,
+        level: 1,
+        width: 0.14,
+        height: 1
     },
     {
-        //btm right
-        x:0.30,
-        // x:202,
-        level:1,
-        // y:542,
-        width:448,
-        height:32
+        //one right
+        x: 0.30,
+        level: 1,
+        width: 0.697,
+        height: 1
     },
     {
-        // one left
-        x:0,
-        level:2,
-        // y:422,
-        width:480,
-        height:32
+        // two left
+        x: 0,
+        level: 2,
+        width: 0.63,
+        height: 1
     },
     {
-        // two right
-        x:1.18,
-        level:2,
-        // y:358,
-        width:64,
-        height:32
-    },
-    {
-        // three left
-        x:0,
-        level:3,
-        // y:294,
-        width:224,
-        height:32
+        // three right
+        x: 0.75,
+        level: 3,
+        width: 0.145,
+        height: 1
     },
     {
         // four left
-        x:1.97,
-        level:4,
-        // y:230,
-        width:224,
-        height:32
+        x: 0,
+        level: 4,
+        width: 0.34,
+        height: 1
+    },
+    {
+        // five left
+        x: 0.5,
+        level: 5,
+        width: 0.34,
+        height: 1
     },
     {
         // top
-        x:0,
-        level:5,
-        // y:100,
-        width:650,
-        height:32
+        x: 0,
+        level: 6,
+        width: 1,
+        height: 1
     },
+];
+
+const ladders = [
+    {
+        x:0.05,
+        form: 1,
+        to: 2
+    },
+    {
+        x:0.79 + ladderWidthRatio,
+        form: 3,
+        to: 5
+    },
+    {
+        x:0.6,
+        form: 5,
+        to: 6
+    }
 ];
 
 const keys = [];
 let enemies = [];
-let ladders = [];
 let gravity = 10;
 let platform = {
     x: platforms.x,
@@ -143,29 +177,7 @@ function setCanvas() {
 
 
 
-//--- images  ---//
-let backgroundImage = new Image();
-backgroundImage.src = "./assets/background2.png";
 
-let platformImage = new Image();
-platformImage.src = "assets/level-two-left.png";
-
-let playerSprite = new Image();
-playerSprite.src = "assets/characters.png";
-
-let enemySprite = new Image();
-enemySprite.src = "assets/Enemy.png";
-
-let skyTwo = new Image();
-skyTwo.src = "assets/sky-2.png";
-let skyOne = new Image();
-skyOne.src = "assets/sky-1.png";
-let scoreBoard = new Image();
-scoreBoard.src = "assets/score-board.png";
-let door = new Image();
-door.src = "assets/door.png";
-let ladder = new Image();
-ladder.src = "assets/stairs.png"; 
 
 
 function drawBackground() {
@@ -179,32 +191,78 @@ function drawBackground() {
 }
 
 function drawPlatform() {
-    platforms.forEach((item,index) =>{
+    drawGrounds();
+    drawLadders();
+}
+
+function drawGrounds() {
+    platforms.forEach((item, index) => {
         let x = getXByRatio(item.x);
         let y = getYByLevel(item.level);
+        let width = getWidthByRatio(item.width);
+        let height = getHeightByRatio(item.height);
         ctx.drawImage(
             platformImage,
             x,
             y,
-            item.width,
-            item.height
+            width,
+            height
         );
     });
-    
 }
 
-function getYByLevel(level){
+function drawLadders() {
+    ladders.forEach((item, index) => {
+        let x = getLadderX(item.x);
+        let y = getLadderY(item.form);
+        let width = getLadderWidth();
+        let height = getLadderHeight(item.form,item.to);
+        ctx.drawImage(
+            ladderImage,
+            x,
+            y,
+            width,
+            height
+        );
+    });
+}
+
+// responsive values
+function getYByLevel(level) {
     return canvasHeight - (canvasHeight / platformMaxLevel * level) + (canvasHeight * platformTopMarginRatio);
 }
 
-function getXByRatio(x){
-    return canvasWidth * x ;
+function getXByRatio(x) {
+    return canvasWidth * x;
+}
+
+function getWidthByRatio(width) {
+    return canvasWidth * width;
+}
+
+function getHeightByRatio(height) {
+    return canvasHeight * height * 0.052;
+}
+
+function getLadderX(x){
+    return canvasWidth * x;
+}
+
+function getLadderY(from){
+    return getYByLevel(from);
+}
+
+function getLadderWidth(){
+    return canvasWidth * ladderWidthRatio;
+}
+
+function getLadderHeight(from,to){
+    return getYByLevel(to) - getYByLevel(from);
 }
 
 
+
 // Hér setjum við inn alla fleka og stiga sem búa til leikborðið.
-
-
 function drawPlayer(img, sX, sY, sW, sH, dX, dY, dW, dH) {
     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
 
@@ -334,14 +392,9 @@ function animate() {
 
         // player.y += gravity
 
-        
 
-        ladders[
-            ctx.drawImage(ladder, 586, 542, 32, 128),
-            ctx.drawImage(ladder, 459, 102, 32, 128),
-            ctx.drawImage(ladder, 32, 422, 32, 128),
-            ctx.drawImage(ladder, 554, 230, 32, 128)
-        ]
+
+        
 
         drawPlayer(playerSprite,
             player.width * player.frameX,
