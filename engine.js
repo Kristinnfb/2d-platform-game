@@ -130,6 +130,7 @@ class Player {
         this.moving = false;
         this.jumping = false;
         this.jumped = 0;
+        this.gravity = 1;
     }
 
     handleFrame() {
@@ -206,8 +207,8 @@ function hitY(enemy) {
     return checkCoordinatesMerge(playerTop,playerBottom,enemyTop,enemyBottom,tolerance);
 }
 
-
-const platforms = [
+let platForms = [];
+const platformsPositions = [
     {
         //one left
         x: 0,
@@ -297,13 +298,13 @@ const enemyPositions = [
     }
 ];
 
-const keys = [];
-let platform = {
-    x: platforms.x,
-    y: platforms.y,
-    width: platforms.width,
-    height: platforms.height
-};
+let keys = [];
+// let platform = {
+//     x: platforms.x,
+//     y: platforms.y,
+//     width: platforms.width,
+//     height: platforms.height
+// };
 
 
 
@@ -344,6 +345,7 @@ function setVariables() {
     win = false;
     enemies = [];
     maxJumpHeight = 1000;
+    keys = [];
 }
 
 function randomSpeed(min, max) { // min and max included 
@@ -392,11 +394,17 @@ function drawPlatform() {
 }
 
 function drawGrounds() {
-    platforms.forEach((item, index) => {
+    platformsPositions.forEach((item, index) => {
         let x = getXByRatio(item.x);
         let y = getYByLevel(item.level);
         let width = getWidthByRatio(item.width);
         let height = getGroundHeightByRatio();
+        platForms.push({
+            x:x,
+            y:y,
+            width:width,
+            height:height
+        });
         ctx.drawImage(
             platformImage,
             x,
@@ -498,11 +506,11 @@ function drawDoor() {
         height
     );
 
-    ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.strokeStyle = "yellow";
-        ctx.rect(doorLeft, y, width , height);
-        ctx.stroke();
+    // ctx.beginPath();
+    //     ctx.lineWidth = "1";
+    //     ctx.strokeStyle = "yellow";
+    //     ctx.rect(doorLeft, y, width , height);
+    //     ctx.stroke();
 }
 
 function drawScoreBoard() {
@@ -532,11 +540,11 @@ function drawPlayer() {
         player.responsiveHeight
     );
 
-    ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.strokeStyle = "red";
-        ctx.rect(playerLeft, playerTop, playerWidth, playerHeight);
-        ctx.stroke();
+    // ctx.beginPath();
+    //     ctx.lineWidth = "1";
+    //     ctx.strokeStyle = "red";
+    //     ctx.rect(playerLeft, playerTop, playerWidth, playerHeight);
+    //     ctx.stroke();
 }
 
 
@@ -632,10 +640,6 @@ function checkCoordinatesMerge(firstLeft,firstRight,secondLeft,secondRight,toler
 
 function checkCoordinatesInside(bigLeft,bigRight,smallLeft,smallRight,tol = 0){
     let tolerance = -getDistanceByCanvasWidth(tol);
-    console.log(bigLeft <= smallLeft);
-    console.log(bigLeft , smallLeft );
-    console.log( bigRight >= smallRight);
-    console.log(bigRight , smallRight);
     return (bigLeft <= smallLeft  && bigRight >= smallRight);
     // return (bigLeft - smallLeft <= tolerance && smallRight - bigRight  >= tolerance);
 }
@@ -701,6 +705,28 @@ function startAnimating(fps) {
     animate();
 }
 
+function applyGravity(){
+    applyGravityOnPlayer();
+}
+
+function applyGravityOnPlayer(){
+    if(!playerBottom) return false;
+    if(!isPlayerInGround()){
+        player.y += player.gravity;
+    }
+}
+
+function isPlayerInGround(){
+    let status = false;
+    platForms.forEach((ground,index)=>{
+        if(playerBottom <= ground.y || checkCoordinatesInside(ground.x,ground.x + ground.width,playerLeft,playerRight)){
+            status = true;
+        }
+    });
+    return status;
+}
+
+
 
 function animate() {
 
@@ -718,6 +744,7 @@ function animate() {
         moveEnemies();
         movePlayer();
         setScore();
+        applyGravity();
     }
 
     if (ended) {
@@ -729,21 +756,13 @@ function animate() {
 }
 
 
-// function renderAnimation() {
-//     if (isEnd()) {
-//         window.cancelAnimationFrame(animationId);
-//         return false;
-//     }
-//     if (animationId % 5 == 0) {
-//         animate();
-//     }
-//     animationId = window.requestAnimationFrame(renderAnimation);
-// }
-
-
 
 function isEnd() {
     if (failed) {
+        return true;
+    }
+    if(playerBottom > canvasHeight) {
+        failed = true;
         return true;
     }
     if(isWin()){
@@ -763,7 +782,8 @@ function showWinAlert() {
 }
 
 function showFail() {
-    // initiateWindow();
+    alert('Failed');
+    location.reload();
     return false;
 }
 
