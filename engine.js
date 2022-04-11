@@ -90,7 +90,7 @@ class Enemy {
 }
 
 function hitX(x,width){
-    return false;
+    return true;
     return (x <= player.x + player.responsiveWidth || x + width >= player.x);
 }
 
@@ -588,7 +588,10 @@ function animate() {
 }
 
 function renderAnimation(){
-    if(isEnd()) return false;
+    if(isEnd()) {
+        window.cancelAnimationFrame(animationId);
+        return false;
+    }
     if(animationId % 5 == 0){
         animate();
     }
