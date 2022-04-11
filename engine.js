@@ -570,6 +570,16 @@ function touchGround() {
     return true;
 }
 
+let fps, fpsInterval, startTime, now, then, elapsed;
+
+function startAnimating(fps) {
+    fpsInterval = 1000/fps;
+    then = Date.now();
+    startTime = then;
+    animate();
+}
+
+
 function animate() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     drawBackground();
