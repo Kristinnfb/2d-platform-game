@@ -135,11 +135,14 @@ class Player {
 
     //player moves
     moveUp() {
-        if(!isPlayerOnLadder()) return false;
+        if(!isPlayerOnLadder('bottom')) return false;
         this.y -= this.speed;
         this.frameY = 4;
         this.moving = true;
         setPlayerValues(this);
+        // Red rectangle
+
+        
     }
 
     moveLeft() {
@@ -157,6 +160,7 @@ class Player {
     }
 
     moveDown() {
+        if(!isPlayerOnLadder('top')) return false;
         this.y += this.speed;
         this.frameY = 4;
         this.moving = true;
@@ -175,17 +179,14 @@ function hitX(enemy) {
     let tolerance = -getDistanceByCanvasWidth(0.045);
     let enemyRight = enemy.x + enemy.responsiveWidth;
     let enemyLeft = enemy.x;
-    result =  checkCoordinatesMerge(playerLeft,playerRight,enemyLeft,enemyRight,tolerance);
-    return result;
+    return  checkCoordinatesMerge(playerLeft,playerRight,enemyLeft,enemyRight,tolerance);
 }
 
 function hitY(enemy) {
     let tolerance = -getDistanceByCanvasWidth(0.025);
     let enemyBottom = enemy.y + enemy.responsiveHeight;
     let enemyTop = enemy.y;
-    let result =  checkCoordinatesMergeY(playerTop,playerBottom,enemyTop,enemyBottom,tolerance);
-    console.log('y'+result);
-    return result;
+    return checkCoordinatesMerge(playerTop,playerBottom,enemyTop,enemyBottom,tolerance);
 }
 
 
@@ -240,16 +241,16 @@ const laddersPositions = [
         form: 1,
         to: 2
     },
-    {
-        x: 0.79 + ladderWidthRatio,
-        form: 3,
-        to: 5
-    },
-    {
-        x: 0.6,
-        form: 5,
-        to: 6
-    }
+    // {
+    //     x: 0.79 + ladderWidthRatio,
+    //     form: 3,
+    //     to: 5
+    // },
+    // {
+    //     x: 0.6,
+    //     form: 5,
+    //     to: 6
+    // }
 ];
 
 const enemyPositions = [
@@ -259,24 +260,24 @@ const enemyPositions = [
         min: 0,
         max: 0.63
     },
-    // {
-    //     x: 0.05,
-    //     level: 4,
-    //     min: 0,
-    //     max: 0.34
-    // },
-    // {
-    //     x: 0.52,
-    //     level: 5,
-    //     min: 0.5,
-    //     max: 0.34 + 0.5
-    // },
-    // {
-    //     x: 0.4,
-    //     level: 6,
-    //     min: 0,
-    //     max: 1
-    // }
+    {
+        x: 0.05,
+        level: 4,
+        min: 0,
+        max: 0.34
+    },
+    {
+        x: 0.52,
+        level: 5,
+        min: 0.5,
+        max: 0.34 + 0.5
+    },
+    {
+        x: 0.4,
+        level: 6,
+        min: 0,
+        max: 1
+    }
 ];
 
 const keys = [];
@@ -334,7 +335,7 @@ function randomSpeed(min, max) { // min and max included
 
 
 function setPlayerResponsive() {
-    let width = canvasWidth * 0.12;
+    let width = canvasWidth * 0.07;
     let height = width * playerImageAspectRatio;
     playerWidth = width;
     playerHeight = height;
@@ -393,7 +394,14 @@ function drawLadders() {
             item.width,
             item.height
         );
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.strokeStyle = "green";
+        ctx.rect(item.x, item.y, item.width, item.height);
+        ctx.stroke();
     });
+
+    
 }
 
 function initiateEnemies() {
@@ -443,6 +451,12 @@ function drawEnemy(enemy) {
         enemy.responsiveWidth,
         enemy.responsiveHeight
     );
+
+    ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.strokeStyle = "blue";
+        ctx.rect(enemy.x, enemy.y, enemy.responsiveWidth , enemy.responsiveHeight);
+        ctx.stroke();
 }
 
 function drawDoor() {
@@ -484,6 +498,12 @@ function drawPlayer() {
         player.responsiveWidth,
         player.responsiveHeight
     );
+
+    ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.strokeStyle = "red";
+        ctx.rect(playerLeft, playerTop, playerWidth, playerHeight);
+        ctx.stroke();
 }
 
 
@@ -539,31 +559,43 @@ function setPlayerValues(player){
     playerTop = player.y ;
 }
 
-function isPlayerOnLadder(){
+function isPlayerOnLadder(side){
     let status = false;
     ladders.forEach((ladder,index) => {
-        let onLadder = checkCoordinatesInside(playerLeft,playerRight,ladder.x,ladder.x + ladder.width*2);
-        if(onLadder){
-            status = true;
+        let onLadderX = checkCoordinatesInside(playerLeft,playerRight,ladder.x,ladder.x + ladder.width);
+        if(onLadderX){
+            let onLadderY;
+            if(side == 'bottom'){
+                onLadderY = checkPlayerOnLadderBottom(ladder,getDistanceByCanvasWidth(0.003));
+            }
+            else if(side == 'top'){
+                onLadderY = checkPlayerOnLadderTop(ladder,getDistanceByCanvasWidth(0.003));
+            }
+
+            if(onLadderY){
+                status = true;
+            }
         }
     });
     return status;
 }
 
+function checkPlayerOnLadderBottom(ladder,tolerance = 0){
+    let ladderTop = ladder.y + ladder.height;
+   return playerBottom - ladder.y <= tolerance && playerBottom - ladderTop > getDistanceByCanvasWidth(0.0076);
+}
+
+function checkPlayerOnLadderTop(ladder,tolerance = 0){
+    let ladderTop = ladder.y + ladder.height;
+   return playerBottom - ladder.y <= 0 && playerBottom - ladderTop > 0;
+}
+
 function checkCoordinatesMerge(firstLeft,firstRight,secondLeft,secondRight,tolerance = 0){
     let secondHitFromRight = (firstLeft - secondRight <= tolerance && firstLeft >= secondLeft);
     let secondHitFromLeft = (secondLeft - firstRight <= tolerance && secondLeft >= firstLeft);
-    console.log(tolerance);
-    console.log(secondHitFromRight);
-    console.log(secondHitFromLeft);
     return secondHitFromLeft || secondHitFromRight;
 }
 
-function checkCoordinatesMergeY(firstTop,firstBottom,secondTop,secondBottom,tolerance = 0){
-    let secondHitFromTop = (firstTop - secondBottom <= tolerance && firstTop >= secondTop);
-    let secondHitFromBottom = (secondTop - firstBottom <= tolerance && secondTop >= firstTop);
-    return secondHitFromTop || secondHitFromBottom;
-}
 
 function checkCoordinatesInside(bigLeft,bigRight,smallLeft,smallRight,tol = 0){
     let tolerance = -getDistanceByCanvasWidth(tol);
