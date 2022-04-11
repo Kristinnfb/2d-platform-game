@@ -64,7 +64,7 @@ class Enemy {
         this.y = y;
         this.speed = randomSpeed(2, 5);
         this.moving = true;
-        this.direction = randomSpeed(1,3) == 1 ? 1 : -1;
+        this.direction = randomSpeed(1, 3) == 1 ? 1 : -1;
         this.maxLeft = maxLeft;
         this.maxRight = maxRight;
         this.responsiveWidth = enemyWidth;
@@ -83,18 +83,18 @@ class Enemy {
 
     checkPlayerHit() {
         if (!player) return false;
-        if(hitX(this.x,this.responsiveWidth) && hitY(this.y,this.responsiveHeight)){
+        if (hitX(this.x, this.responsiveWidth) && hitY(this.y, this.responsiveHeight)) {
             failed = true;
         }
     }
 }
 
-function hitX(x,width){
+function hitX(x, width) {
     return true;
     return (x <= player.x + player.responsiveWidth || x + width >= player.x);
 }
 
-function hitY(y,height){
+function hitY(y, height) {
     return true;
     return (y <= player.y + player.responsiveHeight || y + height >= player.y);
 }
@@ -276,7 +276,7 @@ function setCanvas() {
     canvas.height = canvasHeight;
 }
 
-function setVariables(){
+function setVariables() {
     failed = false;
     win = false;
     enemies = [];
@@ -573,7 +573,7 @@ function touchGround() {
 let fps, fpsInterval, startTime, now, then, elapsed;
 
 function startAnimating(fps) {
-    fpsInterval = 1000/fps;
+    fpsInterval = 1000 / fps;
     then = Date.now();
     startTime = then;
     animate();
@@ -581,28 +581,37 @@ function startAnimating(fps) {
 
 
 function animate() {
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    drawBackground();
-    drawPlatform();
-    drawPlayer();
-    moveEnemies();
-    movePlayer();
-    handlePlayerFrame();
-    handleEnemyFrame();
+
+    requestAnimationFrame(animate);
+    now = Date.now();
+    elapsed = now - then;
+    if (elapsed > fpsInterval) {
+        then = now - (elapsed % fpsInterval);
+
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawBackground();
+        drawPlatform();
+        drawPlayer();
+        moveEnemies();
+        movePlayer();
+        handlePlayerFrame();
+        handleEnemyFrame();
+    }
     let result = isEnd();
     if (result) {
         // stop animation when player wins or loose
         window.cancelAnimationFrame(animationId);
         return showFail();
     }
+
 }
 
-function renderAnimation(){
-    if(isEnd()) {
+function renderAnimation() {
+    if (isEnd()) {
         window.cancelAnimationFrame(animationId);
         return false;
     }
-    if(animationId % 5 == 0){
+    if (animationId % 5 == 0) {
         animate();
     }
     animationId = window.requestAnimationFrame(renderAnimation);
