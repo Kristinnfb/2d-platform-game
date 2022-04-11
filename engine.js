@@ -46,6 +46,8 @@ const platformMaxLevel = 6;
 const platformTopMarginRatio = 0.1127
 const ladderWidthRatio = 0.048;
 const groundHeightRatio = 0.052;
+const enemyImageAspectRatio = 0.583;
+const playerImageAspectRatio = 1;
 let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
@@ -53,9 +55,14 @@ let enemyHeight = 0;
 let playerWidth = 0;
 let playerHeight = 0;
 let enemies = [];
+let ladders = [];
 let failed = false;
 let win = false;
 let player;
+let playerLeft;
+let playerRight;
+let playerTop;
+let playerBottom;
 
 //classes
 class Enemy {
@@ -63,7 +70,7 @@ class Enemy {
         this.x = x;
         this.y = y;
         this.speed = randomSpeed(2, 5);
-        this.moving = false;
+        this.moving = true;
         this.direction = randomSpeed(1, 3) == 1 ? 1 : -1;
         this.maxLeft = maxLeft;
         this.maxRight = maxRight;
@@ -85,24 +92,22 @@ class Enemy {
             }
         }
         drawEnemy(this);
-        handleEnemyFrame(this);
+        this.handleFrame();
+        this.checkPlayerHit();
+    }
+
+    handleFrame() {
+        if (this.frameX < 3 && this.moving) this.frameX++;
+        else this.frameX = 0;
     }
 
     checkPlayerHit() {
         if (!player) return false;
-        if (hitX(this.x, this.responsiveWidth) && hitY(this.y, this.responsiveHeight)) {
+        if (hitX(this) && hitY(this)) {
             failed = true;
+            this.moving = false;
         }
     }
-}
-
-function hitX(x, width) {
-    return false;
-    return (x <= player.x + player.responsiveWidth || x + width >= player.x);
-}
-
-function hitY(y, height) {
-    return (y <= player.y + player.responsiveHeight || y + height >= player.y);
 }
 
 class Player {
@@ -123,13 +128,64 @@ class Player {
         this.jumping = false;
     }
 
+    handleFrame() {
+        if (this.frameX < 5 && this.moving) this.frameX++;
+        else this.frameX = 0;
+    }
+
+    //player moves
+    moveUp() {
+        if(!isPlayerOnLadder()) return false;
+        this.y -= this.speed;
+        this.frameY = 4;
+        this.moving = true;
+        setPlayerValues(this);
+    }
+
+    moveLeft() {
+        this.x -= this.speed;
+        this.frameY = 3;
+        this.moving = true;
+        setPlayerValues(this);
+    }
+
+    moveRight() {
+        this.x += this.speed;
+        this.frameY = 2;
+        this.moving = true;
+        setPlayerValues(this);
+    }
+
+    moveDown() {
+        this.y += this.speed;
+        this.frameY = 4;
+        this.moving = true;
+        setPlayerValues(this);
+    }
+
     jump() {
-
+        this.y -= gravity
+        this.frameY = 2;
+        this.moving = true;
+        this.jumping = true;
     }
+}
 
-    move() {
+function hitX(enemy) {
+    let tolerance = -getDistanceByCanvasWidth(0.045);
+    let enemyRight = enemy.x + enemy.responsiveWidth;
+    let enemyLeft = enemy.x;
+    result =  checkCoordinatesMerge(playerLeft,playerRight,enemyLeft,enemyRight,tolerance);
+    return result;
+}
 
-    }
+function hitY(enemy) {
+    let tolerance = -getDistanceByCanvasWidth(0.025);
+    let enemyBottom = enemy.y + enemy.responsiveHeight;
+    let enemyTop = enemy.y;
+    let result =  checkCoordinatesMergeY(playerTop,playerBottom,enemyTop,enemyBottom,tolerance);
+    console.log('y'+result);
+    return result;
 }
 
 
@@ -178,7 +234,7 @@ const platforms = [
     },
 ];
 
-const ladders = [
+const laddersPositions = [
     {
         x: 0.05,
         form: 1,
@@ -234,24 +290,6 @@ let platform = {
 
 
 
-
-let enemy = {
-    x: 200,
-    y: 300,
-    width: 48,
-    height: 48,
-    frameX: 0,
-    frameY: 0,
-    speed: 1,
-    velocity_y: 5,
-    gravity: 1,
-    moving: true,
-    responsiveWidth: 48,
-    responsiveHeight: 48,
-};
-
-
-
 // initiate
 function initiateWindow() {
     setVariables();
@@ -260,6 +298,7 @@ function initiateWindow() {
     setPlayerResponsive();
     setEnemyResponsive();
     drawBackground();
+    initiateLadders();
     drawPlatform();
     initiatePlayer();
     initiateEnemies();
@@ -295,17 +334,15 @@ function randomSpeed(min, max) { // min and max included
 
 
 function setPlayerResponsive() {
-    let ratio = playerImage.height / playerImage.width;
     let width = canvasWidth * 0.12;
-    let height = width * ratio;
+    let height = width * playerImageAspectRatio;
     playerWidth = width;
     playerHeight = height;
 }
 
 function setEnemyResponsive() {
-    let ratio = enemyImage.height / enemyImage.width;
-    let width = canvasWidth * 0.07;
-    let height = width * ratio;
+    let width = canvasWidth * 0.12;
+    let height = width * enemyImageAspectRatio;
     enemyWidth = width;
     enemyHeight = height;
 }
@@ -349,16 +386,12 @@ function drawGrounds() {
 
 function drawLadders() {
     ladders.forEach((item, index) => {
-        let x = getLadderX(item.x);
-        let y = getLadderY(item.form);
-        let width = getLadderWidth();
-        let height = getLadderHeight(item.form, item.to);
         ctx.drawImage(
             ladderImage,
-            x,
-            y,
-            width,
-            height
+            item.x,
+            item.y,
+            item.width,
+            item.height
         );
     });
 }
@@ -371,24 +404,44 @@ function initiateEnemies() {
     });
 }
 
-function moveEnemies() {
-    enemies.forEach((item, index) => {
-        item.move();
-        item.checkPlayerHit();
+function initiateLadders() {
+    ladders = [];
+    laddersPositions.forEach((item, index) => {
+        let x = getLadderX(item.x);
+        let y = getLadderY(item.form);
+        let width = getLadderWidth();
+        let height = getLadderHeight(item.form, item.to);
+        let ladder = {
+            x:x,
+            y:y,
+            width:width,
+            height:height
+        }
+        ladders.push(ladder);
+    });
+    laddersPositions.forEach((item, index) => {
+        let enemyObject = new Enemy(getEnemyX(item.x), getEnemyY(item.level), getDistanceByCanvasWidth(item.min), getDistanceByCanvasWidth(item.max));
+        enemies.push(enemyObject);
     });
 }
 
-function drawEnemy(current) {
+function moveEnemies() {
+    enemies.forEach((item, index) => {
+        item.move();
+    });
+}
+
+function drawEnemy(enemy) {
     ctx.drawImage(
         enemyImage,
         enemy.width * enemy.frameX,
         enemy.height * enemy.frameY,
         enemy.width,
         enemy.height,
-        current.x,
-        current.y,
-        current.responsiveWidth,
-        current.responsiveHeight
+        enemy.x,
+        enemy.y,
+        enemy.responsiveWidth,
+        enemy.responsiveHeight
     );
 }
 
@@ -464,7 +517,7 @@ function getEnemyX(x) {
 }
 
 function getEnemyY(level) {
-    return getYByLevel(level) - enemyHeight - getGroundHeightByRatio();
+    return getYByLevel(level) - enemyHeight;
 }
 
 function getLadderY(from) {
@@ -479,48 +532,48 @@ function getLadderHeight(from, to) {
     return getYByLevel(to) - getYByLevel(from);
 }
 
-
-//player moves
-function moveUp() {
-    player.y -= player.speed;
-    player.frameY = 4;
-    player.moving = true;
-    console.log('up');
+function setPlayerValues(player){
+    playerRight = player.x + player.responsiveWidth;
+    playerLeft = player.x ;
+    playerBottom = player.y + player.responsiveHeight;
+    playerTop = player.y ;
 }
 
-function moveLeft() {
-    player.x -= player.speed;
-    player.frameY = 3;
-    player.moving = true;
-    console.log('left');
+function isPlayerOnLadder(){
+    let status = false;
+    ladders.forEach((ladder,index) => {
+        let onLadder = checkCoordinatesInside(playerLeft,playerRight,ladder.x,ladder.x + ladder.width*2);
+        if(onLadder){
+            status = true;
+        }
+    });
+    return status;
 }
 
-function moveRight() {
-    player.x += player.speed;
-    player.frameY = 2;
-    player.moving = true;
-    console.log('right');
+function checkCoordinatesMerge(firstLeft,firstRight,secondLeft,secondRight,tolerance = 0){
+    let secondHitFromRight = (firstLeft - secondRight <= tolerance && firstLeft >= secondLeft);
+    let secondHitFromLeft = (secondLeft - firstRight <= tolerance && secondLeft >= firstLeft);
+    console.log(tolerance);
+    console.log(secondHitFromRight);
+    console.log(secondHitFromLeft);
+    return secondHitFromLeft || secondHitFromRight;
 }
 
-function moveDown() {
-    player.y += player.speed;
-    player.frameY = 4;
-    player.moving = true;
-    console.log('down');
+function checkCoordinatesMergeY(firstTop,firstBottom,secondTop,secondBottom,tolerance = 0){
+    let secondHitFromTop = (firstTop - secondBottom <= tolerance && firstTop >= secondTop);
+    let secondHitFromBottom = (secondTop - firstBottom <= tolerance && secondTop >= firstTop);
+    return secondHitFromTop || secondHitFromBottom;
 }
 
-function jump() {
-    player.y -= gravity
-    player.frameY = 2;
-    player.moving = true;
-    player.jumping = true;
-    console.log('jump')
+function checkCoordinatesInside(bigLeft,bigRight,smallLeft,smallRight,tol = 0){
+    let tolerance = -getDistanceByCanvasWidth(tol);
+    return (bigLeft <= smallLeft  && bigRight >= smallRight);
+    // return (bigLeft - smallLeft <= tolerance && smallRight - bigRight  >= tolerance);
 }
 
 
-// function drawLadder(img, sX, sY, sW, sH, dX, dY, dW, dH) {
-//     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
-// }
+
+
 
 window.addEventListener("keydown", function (e) {
     keys[e.keyCode] = true;
@@ -535,47 +588,40 @@ window.addEventListener("keyup", function (e) {
 
 
 function movePlayer() {
-    if (player.x >= 220 && player.x <= 400) {
-        player.y += gravity
-    }
+    // if (player.x >= 220 && player.x <= 400) {
+    //     player.y += gravity
+    // }
 
     if (keys[38]) {
         // && player.x >= ladders.x && 
         // player.x <= (ladders.x + ladders.width) && 
         // player.y === ladders.y)        
-        moveUp();
+        player.moveUp();
     }
     if (keys[37] && player.x > 0) {
-        moveLeft();
+        player.moveLeft();
     }
-    if (keys[40] && player.y <= 0) {
-        moveDown();
+    if (keys[40] && player.y >= 0) {
+        player.moveDown();
     }
     if (keys[39] && player.x < canvas.width - player.width) {
-        moveRight();
+        player.moveRight();
     }
     if (keys[32] && player.jumping == false) {
-        jump();
+        player.jump();
     }
+
+    player.handleFrame();
 }
 
-function handlePlayerFrame() {
-    if (player.frameX < 5 && player.moving) player.frameX++;
-    else player.frameX = 0;
-}
 
-function handleEnemyFrame(current) {
-    if (enemy.frameX < 3 && enemy.moving) enemy.frameX++;
-    else enemy.frameX = 0;
-}
-
-function touchGround() {
-    if (player.x > platform.x + platform.width) return false;
-    if (player.x + player.width < platform.x) return false;
-    if (player.y > platform.y + platform.height) return false;
-    if (player.y + player.height < platform.y) return false;
-    return true;
-}
+// function touchGround() {
+//     if (player.x > platform.x + platform.width) return false;
+//     if (player.x + player.width < platform.x) return false;
+//     if (player.y > platform.y + platform.height) return false;
+//     if (player.y + player.height < platform.y) return false;
+//     return true;
+// }
 
 let fpsInterval, startTime, now, then, elapsed;
 
@@ -592,6 +638,7 @@ function animate() {
     animationId = requestAnimationFrame(animate);
     now = Date.now();
     elapsed = now - then;
+    let ended = isEnd();
     if (elapsed > fpsInterval) {
         then = now - (elapsed % fpsInterval);
 
@@ -601,11 +648,9 @@ function animate() {
         drawPlayer();
         moveEnemies();
         movePlayer();
-        handlePlayerFrame();
     }
-    let result = isEnd();
 
-    if (result) {
+    if (ended) {
         // stop animation when player wins or loose
         window.cancelAnimationFrame(animationId);
         return showFail();
@@ -636,12 +681,10 @@ function isEnd() {
 
 function showWinAlert() {
     initiateWindow();
-    console.log('win');
 }
 
 function showFail() {
-    initiateWindow();
-    console.log('Failed');
+    // initiateWindow();
     return false;
 }
 
