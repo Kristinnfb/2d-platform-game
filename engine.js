@@ -50,9 +50,12 @@ let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
 let enemyHeight = 0;
+let playerWidth = 0;
+let playerHeight = 0;
 let enemies = [];
 let failed = false;
 let win = false;
+let player;
 
 //classes
 class Enemy {
@@ -61,7 +64,7 @@ class Enemy {
         this.y = y;
         this.speed = randomSpeed(2, 5);
         this.moving = true;
-        this.direction = 1;
+        this.direction = randomSpeed(1,3) == 1 ? 1 : -1;
         this.maxLeft = maxLeft;
         this.maxRight = maxRight;
         this.responsiveWidth = enemyWidth;
@@ -69,7 +72,7 @@ class Enemy {
     }
 
     move() {
-        if (this.moving) {
+        if (this.moving && !isEnd()) {
             this.x += this.speed * this.direction;
             if (this.x >= (this.maxRight - enemyWidth) || this.x <= this.maxLeft) {
                 this.direction *= -1;
@@ -77,7 +80,52 @@ class Enemy {
         }
         drawEnemy(this.x, this.y);
     }
+
+    checkPlayerHit() {
+        if (!player) return false;
+        if(hitX(this.x,this.responsiveWidth) && hitY(this.y,this.responsiveHeight)){
+            failed = true;
+        }
+    }
 }
+
+function hitX(x,width){
+    return false;
+    return (x <= player.x + player.responsiveWidth || x + width >= player.x);
+}
+
+function hitY(y,height){
+    return true;
+    return (y <= player.y + player.responsiveHeight || y + height >= player.y);
+}
+
+class Player {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.speed = 6;
+        this.direction = 1;
+        this.responsiveWidth = playerWidth;
+        this.responsiveHeight = playerHeight;
+        this.width = 48;
+        this.height = 48;
+        this.frameX = 0;
+        this.frameY = 0;
+        this.velocity_x = 0;
+        this.velocity_y = 1;
+        this.moving = false;
+        this.jumping = false;
+    }
+
+    jump() {
+
+    }
+
+    move() {
+
+    }
+}
+
 
 const platforms = [
     {
@@ -149,24 +197,24 @@ const enemyPositions = [
         min: 0,
         max: 0.63
     },
-    {
-        x: 0.05,
-        level: 4,
-        min: 0,
-        max: 0.34
-    },
-    {
-        x: 0.52,
-        level: 5,
-        min: 0.5,
-        max: 0.34 + 0.5
-    },
-    {
-        x: 0.4,
-        level: 6,
-        min: 0,
-        max: 1
-    }
+    // {
+    //     x: 0.05,
+    //     level: 4,
+    //     min: 0,
+    //     max: 0.34
+    // },
+    // {
+    //     x: 0.52,
+    //     level: 5,
+    //     min: 0.5,
+    //     max: 0.34 + 0.5
+    // },
+    // {
+    //     x: 0.4,
+    //     level: 6,
+    //     min: 0,
+    //     max: 1
+    // }
 ];
 
 const keys = [];
@@ -178,21 +226,7 @@ let platform = {
     height: platforms.height
 };
 
-let player = {
-    jumping: false,
-    width: 48,
-    height: 48,
-    frameX: 0,
-    frameY: 0,
-    speed: 9,
-    velocity_x: 0,
-    velocity_y: 1,
-    x: 10,
-    y: 620,
-    moving: false,
-    responsiveWidth: 48,
-    responsiveHeight: 48,
-};
+
 
 
 let enemy = {
@@ -214,15 +248,16 @@ let enemy = {
 
 // initiate
 function initiateWindow() {
+    setVariables();
     setDimensions();
     setCanvas();
     setPlayerResponsive();
     setEnemyResponsive();
     drawBackground();
     drawPlatform();
-    drawPlayer();
-    drawEnemies();
-    animate();
+    initiatePlayer();
+    initiateEnemies();
+    renderAnimation();
 }
 
 function setDimensions() {
@@ -233,15 +268,18 @@ function setDimensions() {
     //set canvas dimensions
     canvasWidth = windowWidth * 0.48;
     canvasHeight = canvasWidth * canvasRatio;
-
-    console.log(canvasWidth);
-    console.log(canvasHeight);
 }
 
 function setCanvas() {
     if (!canvas) return false;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+}
+
+function setVariables(){
+    failed = false;
+    win = false;
+    enemies = [];
 }
 
 function randomSpeed(min, max) { // min and max included 
@@ -253,8 +291,8 @@ function setPlayerResponsive() {
     let ratio = playerImage.height / playerImage.width;
     let width = canvasWidth * 0.12;
     let height = width * ratio;
-    player.responsiveWidth = width;
-    player.responsiveHeight = height;
+    playerWidth = width;
+    playerHeight = height;
 }
 
 function setEnemyResponsive() {
@@ -265,12 +303,9 @@ function setEnemyResponsive() {
     enemyHeight = height;
 }
 
-
-// function setScore(){
-//     scoreElement.style.left = canvasWidth / 2 + 'px';
-//     scoreElement.innerHTML = 'dddddddddddddddddddddddddddddddddddd';
-// }
-
+function initiatePlayer() {
+    player = new Player(10, canvasHeight - playerHeight - getGroundHeightByRatio());
+}
 
 function drawBackground() {
     ctx.drawImage(
@@ -294,7 +329,7 @@ function drawGrounds() {
         let x = getXByRatio(item.x);
         let y = getYByLevel(item.level);
         let width = getWidthByRatio(item.width);
-        let height = getHeightByRatio();
+        let height = getGroundHeightByRatio();
         ctx.drawImage(
             platformImage,
             x,
@@ -321,11 +356,10 @@ function drawLadders() {
     });
 }
 
-function drawEnemies() {
+function initiateEnemies() {
     enemies = [];
     enemyPositions.forEach((item, index) => {
         let enemyObject = new Enemy(getEnemyX(item.x), getEnemyY(item.level), getDistanceByCanvasWidth(item.min), getDistanceByCanvasWidth(item.max));
-        enemyObject.move();
         enemies.push(enemyObject);
     });
 }
@@ -333,6 +367,7 @@ function drawEnemies() {
 function moveEnemies() {
     enemies.forEach((item, index) => {
         item.move();
+        item.checkPlayerHit();
     });
 }
 
@@ -378,7 +413,6 @@ function drawScoreBoard() {
 }
 
 function drawPlayer() {
-
     ctx.drawImage(
         playerImage,
         player.width * player.frameX,
@@ -410,7 +444,7 @@ function getWidthByRatio(width) {
     return getDistanceByCanvasWidth(width);
 }
 
-function getHeightByRatio() {
+function getGroundHeightByRatio() {
     return canvasHeight * groundHeightRatio;
 }
 
@@ -439,6 +473,43 @@ function getLadderHeight(from, to) {
 }
 
 
+//player moves
+function moveUp() {
+    player.y -= player.speed;
+    player.frameY = 4;
+    player.moving = true;
+    console.log('up');
+}
+
+function moveLeft() {
+    player.x -= player.speed;
+    player.frameY = 3;
+    player.moving = true;
+    console.log('left');
+}
+
+function moveRight() {
+    player.x += player.speed;
+    player.frameY = 2;
+    player.moving = true;
+    console.log('right');
+}
+
+function moveDown() {
+    player.y += player.speed;
+    player.frameY = 4;
+    player.moving = true;
+    console.log('down');
+}
+
+function jump() {
+    player.y -= gravity
+    player.frameY = 2;
+    player.moving = true;
+    player.jumping = true;
+    console.log('jump')
+}
+
 
 // function drawLadder(img, sX, sY, sW, sH, dX, dY, dW, dH) {
 //     ctx.drawImage(img, sX, sY, sW, sH, dX, dY, dW, dH);
@@ -465,37 +536,22 @@ function movePlayer() {
         // && player.x >= ladders.x && 
         // player.x <= (ladders.x + ladders.width) && 
         // player.y === ladders.y)        
-        player.y -= player.speed;
-        player.frameY = 4;
-        player.moving = true;
-        console.log('up');
+        moveUp();
     }
     if (keys[37] && player.x > 0) {
-        player.x -= player.speed;
-        player.frameY = 3;
-        player.moving = true;
-        console.log('left');
+        moveLeft();
     }
     if (keys[40] && player.y <= 0) {
-        player.y += player.speed;
-        player.frameY = 4;
-        player.moving = true;
-        console.log('down');
+        moveDown();
     }
     if (keys[39] && player.x < canvas.width - player.width) {
-        player.x += player.speed;
-        player.frameY = 2;
-        player.moving = true;
-        console.log('right');
+        moveRight();
     }
     if (keys[32] && player.jumping == false) {
-        player.y -= gravity
-        player.frameY = 2;
-        player.moving = true;
-        player.jumping = true;
-        console.log('jump')
+        jump();
     }
 }
+
 function handlePlayerFrame() {
     if (player.frameX < 5 && player.moving) player.frameX++;
     else player.frameX = 0;
@@ -523,45 +579,39 @@ function animate() {
     movePlayer();
     handlePlayerFrame();
     handleEnemyFrame();
-    let result = checkEnd();
+    let result = isEnd();
     if (result) {
         // stop animation when player wins or loose
-        cancelAnimationFrame(animationId);
-        if (result == "win") {
-            showWinAlert();
-        } else if (result == "fail") {
-            showFail();
-        }
-        return false;
+        window.cancelAnimationFrame(animationId);
+        return showFail();
     }
-    animationId = requestAnimationFrame(controlAnimationSpeed);
 }
 
-function controlAnimationSpeed(){
+function renderAnimation(){
+    if(isEnd()) return false;
     if(animationId % 5 == 0){
         animate();
     }
-    else{
-        animationId = requestAnimationFrame(controlAnimationSpeed);
-    }
+    animationId = window.requestAnimationFrame(renderAnimation);
 }
 
-function checkEnd() {
+
+
+function isEnd() {
     if (failed) {
-        return 'fail';
+        return true;
     }
-    else if (win) {
-        return 'win';
-    }
+    return false;
 }
 
 function showWinAlert() {
-    alert('win');
     initiateWindow();
+    console.log('win');
 }
 
 function showFail() {
-    alert('Failed');
     initiateWindow();
+    console.log('Failed');
+    return false;
 }
 
