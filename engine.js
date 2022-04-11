@@ -63,12 +63,18 @@ class Enemy {
         this.x = x;
         this.y = y;
         this.speed = randomSpeed(2, 5);
-        this.moving = true;
+        this.moving = false;
         this.direction = randomSpeed(1, 3) == 1 ? 1 : -1;
         this.maxLeft = maxLeft;
         this.maxRight = maxRight;
         this.responsiveWidth = enemyWidth;
         this.responsiveHeight = enemyHeight;
+        this.width = 48;
+        this.height = 48;
+        this.frameX = 0;
+        this.frameY = 0;
+        this.velocity_y = 5;
+        this.gravity = 1;
     }
 
     move() {
@@ -78,7 +84,8 @@ class Enemy {
                 this.direction *= -1;
             }
         }
-        drawEnemy(this.x, this.y);
+        drawEnemy(this);
+        handleEnemyFrame(this);
     }
 
     checkPlayerHit() {
@@ -90,12 +97,11 @@ class Enemy {
 }
 
 function hitX(x, width) {
-    return true;
+    return false;
     return (x <= player.x + player.responsiveWidth || x + width >= player.x);
 }
 
 function hitY(y, height) {
-    return true;
     return (y <= player.y + player.responsiveHeight || y + height >= player.y);
 }
 
@@ -257,7 +263,8 @@ function initiateWindow() {
     drawPlatform();
     initiatePlayer();
     initiateEnemies();
-    renderAnimation();
+    startAnimating(15);
+    // renderAnimation();
 }
 
 function setDimensions() {
@@ -298,13 +305,13 @@ function setPlayerResponsive() {
 function setEnemyResponsive() {
     let ratio = enemyImage.height / enemyImage.width;
     let width = canvasWidth * 0.07;
-    let height = width * ratio * 3;
+    let height = width * ratio;
     enemyWidth = width;
     enemyHeight = height;
 }
 
 function initiatePlayer() {
-    player = new Player(10, canvasHeight - playerHeight - getGroundHeightByRatio());
+    player = new Player(getDistanceByCanvasWidth(0.05), canvasHeight - playerHeight - getGroundHeightByRatio());
 }
 
 function drawBackground() {
@@ -371,17 +378,17 @@ function moveEnemies() {
     });
 }
 
-function drawEnemy(x, y) {
+function drawEnemy(current) {
     ctx.drawImage(
         enemyImage,
         enemy.width * enemy.frameX,
         enemy.height * enemy.frameY,
         enemy.width,
         enemy.height,
-        x,
-        y,
-        enemy.responsiveWidth,
-        enemy.responsiveHeight
+        current.x,
+        current.y,
+        current.responsiveWidth,
+        current.responsiveHeight
     );
 }
 
@@ -457,7 +464,7 @@ function getEnemyX(x) {
 }
 
 function getEnemyY(level) {
-    return getYByLevel(level) - enemyHeight - 10;
+    return getYByLevel(level) - enemyHeight - getGroundHeightByRatio();
 }
 
 function getLadderY(from) {
@@ -557,7 +564,7 @@ function handlePlayerFrame() {
     else player.frameX = 0;
 }
 
-function handleEnemyFrame() {
+function handleEnemyFrame(current) {
     if (enemy.frameX < 3 && enemy.moving) enemy.frameX++;
     else enemy.frameX = 0;
 }
@@ -570,7 +577,7 @@ function touchGround() {
     return true;
 }
 
-let fps, fpsInterval, startTime, now, then, elapsed;
+let fpsInterval, startTime, now, then, elapsed;
 
 function startAnimating(fps) {
     fpsInterval = 1000 / fps;
@@ -582,7 +589,7 @@ function startAnimating(fps) {
 
 function animate() {
 
-    requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(animate);
     now = Date.now();
     elapsed = now - then;
     if (elapsed > fpsInterval) {
@@ -595,9 +602,9 @@ function animate() {
         moveEnemies();
         movePlayer();
         handlePlayerFrame();
-        handleEnemyFrame();
     }
     let result = isEnd();
+
     if (result) {
         // stop animation when player wins or loose
         window.cancelAnimationFrame(animationId);
@@ -606,16 +613,17 @@ function animate() {
 
 }
 
-function renderAnimation() {
-    if (isEnd()) {
-        window.cancelAnimationFrame(animationId);
-        return false;
-    }
-    if (animationId % 5 == 0) {
-        animate();
-    }
-    animationId = window.requestAnimationFrame(renderAnimation);
-}
+
+// function renderAnimation() {
+//     if (isEnd()) {
+//         window.cancelAnimationFrame(animationId);
+//         return false;
+//     }
+//     if (animationId % 5 == 0) {
+//         animate();
+//     }
+//     animationId = window.requestAnimationFrame(renderAnimation);
+// }
 
 
 
