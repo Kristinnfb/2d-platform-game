@@ -8,7 +8,6 @@ window.addEventListener('load', () => {
 window.addEventListener('resize', initiateWindow);
 
 //--- images  ---//
-// let scoreElement = document.createElement('span');
 
 let backgroundImage = new Image();
 backgroundImage.src = "./assets/background2.png";
@@ -48,6 +47,8 @@ const ladderWidthRatio = 0.048;
 const groundHeightRatio = 0.052;
 const enemyImageAspectRatio = 0.583;
 const playerImageAspectRatio = 1;
+const jumpSpeed = 0.5;
+let maxJumpHeight = 0;
 let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
@@ -63,6 +64,9 @@ let playerLeft;
 let playerRight;
 let playerTop;
 let playerBottom;
+let doorLeft = 0;
+let doorRight = 0;
+let doorBottom = 0;
 
 //classes
 class Enemy {
@@ -81,7 +85,6 @@ class Enemy {
         this.frameX = 0;
         this.frameY = 0;
         this.velocity_y = 5;
-        this.gravity = 1;
     }
 
     move() {
@@ -126,6 +129,7 @@ class Player {
         this.velocity_y = 1;
         this.moving = false;
         this.jumping = false;
+        this.jumped = 0;
     }
 
     handleFrame() {
@@ -168,10 +172,23 @@ class Player {
     }
 
     jump() {
-        this.y -= gravity
+        this.jumping = true;
         this.frameY = 2;
         this.moving = true;
-        this.jumping = true;
+    }
+
+    animate(){
+        // if(this.jumping){
+        //     if(this.jumped < maxJumpHeight){
+        //         this.y -= jumpSpeed;
+        //     }
+        //     else{
+        //         this.y += jumpSpeed;
+        //     }
+        //     this.jumped++;
+        //     if(this.jumped <= 0) this.jumping = false;
+        // }
+        drawPlayer();
     }
 }
 
@@ -241,16 +258,16 @@ const laddersPositions = [
         form: 1,
         to: 2
     },
-    // {
-    //     x: 0.79 + ladderWidthRatio,
-    //     form: 3,
-    //     to: 5
-    // },
-    // {
-    //     x: 0.6,
-    //     form: 5,
-    //     to: 6
-    // }
+    {
+        x: 0.79 + ladderWidthRatio,
+        form: 3,
+        to: 5
+    },
+    {
+        x: 0.6,
+        form: 5,
+        to: 6
+    }
 ];
 
 const enemyPositions = [
@@ -281,7 +298,6 @@ const enemyPositions = [
 ];
 
 const keys = [];
-let gravity = 10;
 let platform = {
     x: platforms.x,
     y: platforms.y,
@@ -327,10 +343,16 @@ function setVariables() {
     failed = false;
     win = false;
     enemies = [];
+    maxJumpHeight = 1000;
 }
 
 function randomSpeed(min, max) { // min and max included 
     return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function setScore(){
+    ctx.font = "25px Arial";
+    ctx.fillText(score,getDistanceByCanvasWidth(0.928),28);
 }
 
 
@@ -394,11 +416,11 @@ function drawLadders() {
             item.width,
             item.height
         );
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.strokeStyle = "green";
-        ctx.rect(item.x, item.y, item.width, item.height);
-        ctx.stroke();
+        // ctx.beginPath();
+        // ctx.lineWidth = "1";
+        // ctx.strokeStyle = "green";
+        // ctx.rect(item.x, item.y, item.width, item.height);
+        // ctx.stroke();
     });
 
     
@@ -452,24 +474,35 @@ function drawEnemy(enemy) {
         enemy.responsiveHeight
     );
 
-    ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.strokeStyle = "blue";
-        ctx.rect(enemy.x, enemy.y, enemy.responsiveWidth , enemy.responsiveHeight);
-        ctx.stroke();
+    // ctx.beginPath();
+    //     ctx.lineWidth = "1";
+    //     ctx.strokeStyle = "blue";
+    //     ctx.rect(enemy.x, enemy.y, enemy.responsiveWidth , enemy.responsiveHeight);
+    //     ctx.stroke();
 }
 
 function drawDoor() {
     let ratio = doorImage.height / doorImage.width;
     let width = canvasWidth * 0.0763;
     let height = width * ratio;
+    let x = canvasWidth * 0.05;
+    let y = getYByLevel(platformMaxLevel) - height;
+    doorLeft = x;
+    doorBottom = y + height;
+    doorRight = x + width;
     ctx.drawImage(
         doorImage,
-        canvasWidth * 0.05,
-        getYByLevel(platformMaxLevel) - height,
+        x,
+        y,
         width,
         height
     );
+
+    ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.strokeStyle = "yellow";
+        ctx.rect(doorLeft, y, width , height);
+        ctx.stroke();
 }
 
 function drawScoreBoard() {
@@ -599,6 +632,10 @@ function checkCoordinatesMerge(firstLeft,firstRight,secondLeft,secondRight,toler
 
 function checkCoordinatesInside(bigLeft,bigRight,smallLeft,smallRight,tol = 0){
     let tolerance = -getDistanceByCanvasWidth(tol);
+    console.log(bigLeft <= smallLeft);
+    console.log(bigLeft , smallLeft );
+    console.log( bigRight >= smallRight);
+    console.log(bigRight , smallRight);
     return (bigLeft <= smallLeft  && bigRight >= smallRight);
     // return (bigLeft - smallLeft <= tolerance && smallRight - bigRight  >= tolerance);
 }
@@ -639,7 +676,7 @@ function movePlayer() {
     if (keys[39] && player.x < canvas.width - player.width) {
         player.moveRight();
     }
-    if (keys[32] && player.jumping == false) {
+    if (keys[32] ) {
         player.jump();
     }
 
@@ -677,9 +714,10 @@ function animate() {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         drawBackground();
         drawPlatform();
-        drawPlayer();
+        player.animate();
         moveEnemies();
         movePlayer();
+        setScore();
     }
 
     if (ended) {
@@ -708,7 +746,16 @@ function isEnd() {
     if (failed) {
         return true;
     }
+    if(isWin()){
+        alert('Your the Winner');
+        score++;
+        return true;
+    }
     return false;
+}
+
+function isWin(){
+    return checkCoordinatesInside(doorLeft - (doorLeft*1.1),doorRight + (doorLeft*1.1),playerLeft,playerRight) && playerBottom <= doorBottom;
 }
 
 function showWinAlert() {
