@@ -752,21 +752,23 @@ function isPlayerOnGround() {
 }
 
 function setNearestGround(ground){
+    let groundTop = ground.y;
+    if(groundTop <= playerBottom) return false;
+    let groundRight = ground.x + ground.width;
+    let groundLeft = ground.x;
+    let groundBottom = ground.y + ground.height;
+
     if(nearestGround == null){
         nearestGround = ground;
     }
     let nearestRight = nearestGround.x + nearestGround.width;
-    let nearestLeft = nearestGround.yx;
+    let nearestLeft = nearestGround.y;
     let nearestTop = nearestGround.y;
     let nearestBottom = nearestGround.y + nearestGround.height;
     
-    let groundRight = ground.x + ground.width;
-    let groundLeft = ground.x;
-    let groundTop = ground.y;
-    let groundBottom = ground.y + ground.height;
 
     let bNearest = nearestTop - playerBottom;
-    let bGround = groundTop - playerBottom;
+    let bGround =  groundTop - playerBottom;
 
     let lNearest = playerLeft - nearestRight;
     let lGround = playerLeft - groundRight;
@@ -774,7 +776,9 @@ function setNearestGround(ground){
     let rNearest = nearestLeft - playerRight;
     let rGround = groundLeft - playerRight;
 
-    if (yDistance && leftDistance ) {
+    let nearestMin = Math.min( Math.abs(bNearest),Math.abs(lNearest),Math.abs(rNearest));
+    let groundMin = Math.min(Math.abs( bGround),Math.abs(lGround),Math.abs(rGround));
+    if (groundMin < nearestMin && groundTop >= playerBottom ) {
         nearestGround = ground;
     }
 }
@@ -808,11 +812,11 @@ function animate() {
         setScore();
         applyGravity();
 
-        // ctx.beginPath();
-        // ctx.lineWidth = "2";
-        // ctx.strokeStyle = "blue";
-        // ctx.rect(nearestGround.x, nearestGround.y,nearestGround.width,nearestGround.height);
-        // ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = "2";
+        ctx.strokeStyle = "blue";
+        ctx.rect(nearestGround.x, nearestGround.y,nearestGround.width,nearestGround.height);
+        ctx.stroke();
     }
 
     if (ended) {
