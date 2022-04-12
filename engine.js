@@ -48,7 +48,7 @@ const groundHeightRatio = 0.052;
 const enemyImageAspectRatio = 0.583;
 const playerImageAspectRatio = 1;
 const jumpSpeed = 0.5;
-let maxJumpHeight = 0;
+let maxJumpHeight = 50;
 let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
@@ -67,13 +67,15 @@ let playerBottom;
 let doorLeft = 0;
 let doorRight = 0;
 let doorBottom = 0;
+let nearestGround = null;
+
 
 //classes
 class Enemy {
     constructor(x, y, maxLeft, maxRight) {
         this.x = x;
         this.y = y;
-        this.speed = randomSpeed(2, 5);
+        this.speed = randomSpeed(2, 3);
         this.moving = true;
         this.direction = randomSpeed(1, 3) == 1 ? 1 : -1;
         this.maxLeft = maxLeft;
@@ -117,7 +119,8 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.speed = 6;
+        this.speed = 8;
+        this.climbingSpeed = 1;
         this.direction = 1;
         this.responsiveWidth = playerWidth;
         this.responsiveHeight = playerHeight;
@@ -140,36 +143,34 @@ class Player {
 
     //player moves
     moveUp() {
-        if(!isPlayerOnLadder('bottom')) return false;
-        this.y -= this.speed;
+        if (!isPlayerOnLadder('bottom')) return false;
+        this.y -= this.climbingSpeed;
         this.frameY = 4;
         this.moving = true;
-        setPlayerValues(this);
         // Red rectangle
 
-        
+
     }
 
     moveLeft() {
+        if (isPlayerOnLadder('between')) return false;
         this.x -= this.speed;
         this.frameY = 3;
         this.moving = true;
-        setPlayerValues(this);
     }
 
     moveRight() {
+        if (isPlayerOnLadder('between')) return false;
         this.x += this.speed;
         this.frameY = 2;
         this.moving = true;
-        setPlayerValues(this);
     }
 
     moveDown() {
-        if(!isPlayerOnLadder('top')) return false;
-        this.y += this.speed;
+        if (!isPlayerOnLadder('top')) return false;
+        this.y += this.climbingSpeed;
         this.frameY = 4;
         this.moving = true;
-        setPlayerValues(this);
     }
 
     jump() {
@@ -178,7 +179,7 @@ class Player {
         this.moving = true;
     }
 
-    animate(){
+    animate() {
         // if(this.jumping){
         //     if(this.jumped < maxJumpHeight){
         //         this.y -= jumpSpeed;
@@ -197,14 +198,14 @@ function hitX(enemy) {
     let tolerance = -getDistanceByCanvasWidth(0.045);
     let enemyRight = enemy.x + enemy.responsiveWidth;
     let enemyLeft = enemy.x;
-    return  checkCoordinatesMerge(playerLeft,playerRight,enemyLeft,enemyRight,tolerance);
+    return checkCoordinatesMerge(playerLeft, playerRight, enemyLeft, enemyRight, tolerance);
 }
 
 function hitY(enemy) {
     let tolerance = -getDistanceByCanvasWidth(0.025);
     let enemyBottom = enemy.y + enemy.responsiveHeight;
     let enemyTop = enemy.y;
-    return checkCoordinatesMerge(playerTop,playerBottom,enemyTop,enemyBottom,tolerance);
+    return checkCoordinatesMerge(playerTop, playerBottom, enemyTop, enemyBottom, tolerance);
 }
 
 let platForms = [];
@@ -213,7 +214,7 @@ const platformsPositions = [
         //one left
         x: 0,
         level: 1,
-        width: 0.14
+        width: 0.19
     },
     {
         //one right
@@ -352,9 +353,9 @@ function randomSpeed(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
-function setScore(){
+function setScore() {
     ctx.font = "25px Arial";
-    ctx.fillText(score,getDistanceByCanvasWidth(0.928),28);
+    ctx.fillText(score, getDistanceByCanvasWidth(0.928), 28);
 }
 
 
@@ -366,14 +367,14 @@ function setPlayerResponsive() {
 }
 
 function setEnemyResponsive() {
-    let width = canvasWidth * 0.12;
+    let width = canvasWidth * 0.08;
     let height = width * enemyImageAspectRatio;
     enemyWidth = width;
     enemyHeight = height;
 }
 
 function initiatePlayer() {
-    player = new Player(getDistanceByCanvasWidth(0.05), canvasHeight - playerHeight - getGroundHeightByRatio());
+    player = new Player(getDistanceByCanvasWidth(0.1), canvasHeight - playerHeight - getGroundHeightByRatio() - 10);
 }
 
 function drawBackground() {
@@ -400,10 +401,10 @@ function drawGrounds() {
         let width = getWidthByRatio(item.width);
         let height = getGroundHeightByRatio();
         platForms.push({
-            x:x,
-            y:y,
-            width:width,
-            height:height
+            x: x,
+            y: y,
+            width: width,
+            height: height
         });
         ctx.drawImage(
             platformImage,
@@ -412,6 +413,12 @@ function drawGrounds() {
             width,
             height
         );
+
+        // ctx.beginPath();
+        // ctx.lineWidth = "1";
+        // ctx.strokeStyle = "black";
+        // ctx.rect(x, y, width, height);
+        // ctx.stroke();
     });
 }
 
@@ -431,7 +438,7 @@ function drawLadders() {
         // ctx.stroke();
     });
 
-    
+
 }
 
 function initiateEnemies() {
@@ -450,10 +457,10 @@ function initiateLadders() {
         let width = getLadderWidth();
         let height = getLadderHeight(item.form, item.to);
         let ladder = {
-            x:x,
-            y:y,
-            width:width,
-            height:height
+            x: x,
+            y: y,
+            width: width,
+            height: height
         }
         ladders.push(ladder);
     });
@@ -530,7 +537,7 @@ function drawScoreBoard() {
 function drawPlayer() {
     ctx.drawImage(
         playerImage,
-        player.width * player.frameX,
+        player.width  * player.frameX,
         player.height * player.frameY,
         player.width,
         player.height,
@@ -541,10 +548,10 @@ function drawPlayer() {
     );
 
     // ctx.beginPath();
-    //     ctx.lineWidth = "1";
-    //     ctx.strokeStyle = "red";
-    //     ctx.rect(playerLeft, playerTop, playerWidth, playerHeight);
-    //     ctx.stroke();
+    // ctx.lineWidth = "1";
+    // ctx.strokeStyle = "red";
+    // ctx.rect(playerLeft, playerTop, playerWidth, playerHeight);
+    // ctx.stroke();
 }
 
 
@@ -593,27 +600,30 @@ function getLadderHeight(from, to) {
     return getYByLevel(to) - getYByLevel(from);
 }
 
-function setPlayerValues(player){
+function setPlayerValues(player) {
     playerRight = player.x + player.responsiveWidth;
-    playerLeft = player.x ;
+    playerLeft = player.x;
     playerBottom = player.y + player.responsiveHeight;
-    playerTop = player.y ;
+    playerTop = player.y;
 }
 
-function isPlayerOnLadder(side){
+function isPlayerOnLadder(side) {
     let status = false;
-    ladders.forEach((ladder,index) => {
-        let onLadderX = checkCoordinatesInside(playerLeft,playerRight,ladder.x,ladder.x + ladder.width);
-        if(onLadderX){
+    ladders.forEach((ladder, index) => {
+        let onLadderX = checkCoordinatesInside(playerLeft, playerRight, ladder.x, ladder.x + ladder.width);
+        if (onLadderX) {
             let onLadderY;
-            if(side == 'bottom'){
-                onLadderY = checkPlayerOnLadderBottom(ladder,getDistanceByCanvasWidth(0.003));
+            if (side == 'bottom') {
+                onLadderY = checkPlayerOnLadderBottom(ladder);
             }
-            else if(side == 'top'){
-                onLadderY = checkPlayerOnLadderTop(ladder,getDistanceByCanvasWidth(0.003));
+            else if (side == 'top') {
+                onLadderY = checkPlayerOnLadderTop(ladder);
+            }
+            else if (side == 'between') {
+                onLadderY = checkPlayerOnLadderBetween(ladder, getDistanceByCanvasWidth(0.003));
             }
 
-            if(onLadderY){
+            if (onLadderY) {
                 status = true;
             }
         }
@@ -621,26 +631,32 @@ function isPlayerOnLadder(side){
     return status;
 }
 
-function checkPlayerOnLadderBottom(ladder,tolerance = 0){
+
+function checkPlayerOnLadderBottom(ladder) {
     let ladderTop = ladder.y + ladder.height;
-   return playerBottom - ladder.y <= tolerance && playerBottom - ladderTop > getDistanceByCanvasWidth(0.0076);
+    return playerBottom <= ladder.y + getDistanceByCanvasWidth(0.02)  && playerBottom >= ladderTop;
 }
 
-function checkPlayerOnLadderTop(ladder,tolerance = 0){
+function checkPlayerOnLadderTop(ladder) {
     let ladderTop = ladder.y + ladder.height;
-   return playerBottom - ladder.y <= 0 && playerBottom - ladderTop > 0;
+    return playerBottom <= ladder.y  && playerBottom >= ladderTop - getDistanceByCanvasWidth(0.02);
 }
 
-function checkCoordinatesMerge(firstLeft,firstRight,secondLeft,secondRight,tolerance = 0){
+function checkPlayerOnLadderBetween(ladder, tolerance = 0) {
+    let ladderTop = ladder.y + ladder.height;
+    return playerBottom <= ladder.y && playerBottom >= ladderTop;
+}
+
+function checkCoordinatesMerge(firstLeft, firstRight, secondLeft, secondRight, tolerance = 0) {
     let secondHitFromRight = (firstLeft - secondRight <= tolerance && firstLeft >= secondLeft);
     let secondHitFromLeft = (secondLeft - firstRight <= tolerance && secondLeft >= firstLeft);
     return secondHitFromLeft || secondHitFromRight;
 }
 
 
-function checkCoordinatesInside(bigLeft,bigRight,smallLeft,smallRight,tol = 0){
+function checkCoordinatesInside(bigLeft, bigRight, smallLeft, smallRight, tol = 0) {
     let tolerance = -getDistanceByCanvasWidth(tol);
-    return (bigLeft <= smallLeft  && bigRight >= smallRight);
+    return (bigLeft <= smallLeft && bigRight >= smallRight);
     // return (bigLeft - smallLeft <= tolerance && smallRight - bigRight  >= tolerance);
 }
 
@@ -680,7 +696,7 @@ function movePlayer() {
     if (keys[39] && player.x < canvas.width - player.width) {
         player.moveRight();
     }
-    if (keys[32] ) {
+    if (keys[32]) {
         player.jump();
     }
 
@@ -705,25 +721,70 @@ function startAnimating(fps) {
     animate();
 }
 
-function applyGravity(){
-    applyGravityOnPlayer();
+function applyGravity() {
+    if (!playerBottom) return false;
+        isPlayerOnGround();
 }
 
-function applyGravityOnPlayer(){
-    if(!playerBottom) return false;
-    if(!isPlayerInGround()){
-        player.y += player.gravity;
+
+
+function isPlayerOnGround() {
+    let status = false;    
+    platForms.forEach((ground, index) => {
+        // let groundX = checkGroundY(ground);
+        // let groundY = checkGroundX(ground);
+        setNearestGround(ground);
+        
+        
+        // if (!groundY && groundX) {
+        //     if (player.y + player.gravity >= nearestGround) {
+        //         player.y = nearestGround;
+        //     }
+        //     else {
+        //         // player.y += player.gravity;
+        //     }
+        // }
+        // else{
+        //     // player.y += player.gravity;
+        // }
+    });
+    return status;
+}
+
+function setNearestGround(ground){
+    if(nearestGround == null){
+        nearestGround = ground;
+    }
+    let nearestRight = nearestGround.x + nearestGround.width;
+    let nearestLeft = nearestGround.yx;
+    let nearestTop = nearestGround.y;
+    let nearestBottom = nearestGround.y + nearestGround.height;
+    
+    let groundRight = ground.x + ground.width;
+    let groundLeft = ground.x;
+    let groundTop = ground.y;
+    let groundBottom = ground.y + ground.height;
+
+    let bNearest = nearestTop - playerBottom;
+    let bGround = groundTop - playerBottom;
+
+    let lNearest = playerLeft - nearestRight;
+    let lGround = playerLeft - groundRight;
+
+    let rNearest = nearestLeft - playerRight;
+    let rGround = groundLeft - playerRight;
+
+    if (yDistance && leftDistance ) {
+        nearestGround = ground;
     }
 }
 
-function isPlayerInGround(){
-    let status = false;
-    platForms.forEach((ground,index)=>{
-        if(playerBottom <= ground.y || checkCoordinatesInside(ground.x,ground.x + ground.width,playerLeft,playerRight)){
-            status = true;
-        }
-    });
-    return status;
+function checkGroundY(ground) {
+    return playerBottom == ground;
+}
+
+function checkGroundX(ground) {
+    return checkCoordinatesInside(ground.x, ground.x + ground.width, playerLeft, playerRight);
 }
 
 
@@ -740,11 +801,18 @@ function animate() {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         drawBackground();
         drawPlatform();
+        setPlayerValues(player);
         player.animate();
         moveEnemies();
         movePlayer();
         setScore();
         applyGravity();
+
+        // ctx.beginPath();
+        // ctx.lineWidth = "2";
+        // ctx.strokeStyle = "blue";
+        // ctx.rect(nearestGround.x, nearestGround.y,nearestGround.width,nearestGround.height);
+        // ctx.stroke();
     }
 
     if (ended) {
@@ -761,11 +829,11 @@ function isEnd() {
     if (failed) {
         return true;
     }
-    if(playerBottom > canvasHeight) {
+    if (playerBottom >= canvasHeight) {
         failed = true;
         return true;
     }
-    if(isWin()){
+    if (isWin()) {
         alert('Your the Winner');
         score++;
         return true;
@@ -773,8 +841,8 @@ function isEnd() {
     return false;
 }
 
-function isWin(){
-    return checkCoordinatesInside(doorLeft - (doorLeft*1.1),doorRight + (doorLeft*1.1),playerLeft,playerRight) && playerBottom <= doorBottom;
+function isWin() {
+    return checkCoordinatesInside(doorLeft - (doorLeft * 1.1), doorRight + (doorLeft * 1.1), playerLeft, playerRight) && playerBottom <= doorBottom;
 }
 
 function showWinAlert() {
