@@ -173,8 +173,8 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.speed = 8;
-        this.climbingSpeed = 4;
+        this.speed = getDistanceByCanvasWidth(0.0122);
+        this.climbingSpeed = getDistanceByCanvasWidth(0.00610);
         this.direction = 1;
         this.responsiveWidth = playerWidth;
         this.responsiveHeight = playerHeight;
@@ -452,8 +452,8 @@ function randomSpeed(min, max) { // min and max included
 }
 
 function setScore() {
-    ctx.font = "25px Arial";
-    ctx.fillText(score, getDistanceByCanvasWidth(0.928), 28);
+    ctx.font = Math.floor(getDistanceByCanvasWidth(0.03816))+"px Arial";
+    ctx.fillText(score, getDistanceByCanvasWidth(0.928), getDistanceByCanvasWidth(0.04274));
 }
 
 
