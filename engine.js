@@ -12,8 +12,29 @@ window.addEventListener('resize', initiateWindow);
 let backgroundImage = new Image();
 backgroundImage.src = "./assets/background2.png";
 
-let platformImage = new Image();
-platformImage.src = "assets/level-two-left.png";
+let groundImage = new Image();
+groundImage.src = "assets/images/ground/ground.png";
+
+let oneL = new Image();
+oneL.src = "assets/images/ground/oneL.png";
+
+let oneR = new Image();
+oneR.src = "assets/images/ground/oneR.png";
+
+let twoL = new Image();
+twoL.src = "assets/images/ground/twoL.png";
+
+let threeR = new Image();
+threeR.src = "assets/images/ground/threeR.png";
+
+let fourL = new Image();
+fourL.src = "assets/images/ground/fourL.png";
+
+let fiveR = new Image();
+fiveR.src = "assets/images/ground/fiveR.png";
+
+let sixL = new Image();
+sixL.src = "assets/images/ground/sixL.png";
 
 let ladderImage = new Image();
 ladderImage.src = "assets/stairs.png";
@@ -105,6 +126,11 @@ class Enemy {
             if (this.x >= (this.maxRight - enemyWidth) || this.x <= this.maxLeft) {
                 this.direction *= -1;
             }
+            else{
+                if(animationId % 20 == 0){
+                    this.direction = randomSpeed(1, 3) == 1 ? 1 : -1;
+                }
+            }
         }
         drawEnemy(this);
         this.handleFrame();
@@ -134,6 +160,8 @@ class Player {
         this.direction = 1;
         this.responsiveWidth = playerWidth;
         this.responsiveHeight = playerHeight;
+        this.actualW = 48;
+        this.actualH = 48;
         this.width = 48;
         this.height = 48;
         this.frameX = 0;
@@ -259,43 +287,50 @@ const platformsPositions = [
         //one left
         x: 0,
         level: 1,
-        width: 0.19
+        width: 0.19,
+        image:oneL
     },
     {
         //one right
         x: 0.30,
         level: 1,
-        width: 0.697
+        width: 0.697,
+        image:oneR
     },
     {
         // two left
         x: 0,
         level: 2,
-        width: 0.63
+        width: 0.63,
+        image:twoL
     },
     {
         // three right
         x: 0.75,
         level: 3,
-        width: 0.145
+        width: 0.145,
+        image:threeR
     },
     {
         // four left
         x: 0,
         level: 4,
-        width: 0.34
+        width: 0.34,
+        image:fourL
     },
     {
-        // five left
+        // five right
         x: 0.3,
         level: 5,
-        width: 0.54
+        width: 0.54,
+        image:fiveR
     },
     {
         // top
         x: 0,
         level: 6,
-        width: 1
+        width: 1,
+        image:sixL
     },
 ];
 
@@ -446,14 +481,16 @@ function drawGrounds() {
         let y = getYByLevel(item.level);
         let width = getWidthByRatio(item.width);
         let height = getGroundHeightByRatio();
+
         platForms.push({
             x: x,
             y: y,
             width: width,
             height: height
         });
+
         ctx.drawImage(
-            platformImage,
+            item.image,
             x,
             y,
             width,
@@ -576,8 +613,8 @@ function drawPlayer() {
         playerImage,
         player.width * player.frameX,
         player.height * player.frameY,
-        player.width,
-        player.height,
+        player.actualW,
+        player.actualH,
         player.x,
         player.y,
         player.responsiveWidth,
