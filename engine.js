@@ -78,8 +78,8 @@ const platformMaxLevel = 6;
 const platformTopMarginRatio = 0.1127
 const ladderWidthRatio = 0.048;
 const groundHeightRatio = 0.052;
-const enemyImageAspectRatio = 0.583;
-const playerImageAspectRatio = 1;
+const enemyImageAspectRatio = 0.6;
+const playerImageAspectRatio = 1.2;
 let animationId = 0;
 let score = 0;
 let enemyWidth = 0;
@@ -96,7 +96,7 @@ let doorRight = 0;
 let doorBottom = 0;
 let nearestGround = null;
 const pixelAdjustment = 0;
-const showStroke = 1;
+const showStroke = 0;
 const normalGravity = 1;
 const playerJumpSpeed = 8;
 
@@ -151,6 +151,24 @@ class Enemy {
     }
 }
 
+function drawPlayer() {
+    ctx.drawImage(
+        playerImage,
+        player.frameWidth * player.frameX + 10,
+        player.frameHeight * player.frameY + 7.5,
+        player.width - 20,
+        player.height -13,
+        player.x,
+        player.y,
+        player.responsiveWidth,
+        player.responsiveHeight
+    );
+
+    if (showStroke) {
+        drawSquare(player.x, player.y, playerWidth, playerHeight, 'red');
+    }
+}
+
 class Player {
     constructor(x, y) {
         this.x = x;
@@ -160,8 +178,8 @@ class Player {
         this.direction = 1;
         this.responsiveWidth = playerWidth;
         this.responsiveHeight = playerHeight;
-        this.actualW = 48;
-        this.actualH = 48;
+        this.frameWidth = 48;
+        this.frameHeight = 48;
         this.width = 48;
         this.height = 48;
         this.frameX = 0;
@@ -440,7 +458,7 @@ function setScore() {
 
 
 function setPlayerResponsive() {
-    let width = canvasWidth * 0.07;
+    let width = canvasWidth * 0.06;
     let height = width * playerImageAspectRatio;
     playerWidth = width;
     playerHeight = height;
@@ -559,9 +577,9 @@ function drawEnemy(enemy) {
     ctx.drawImage(
         enemyImage,
         enemy.width * enemy.frameX,
-        enemy.height * enemy.frameY,
+        enemy.height * enemy.frameY + 18,
         enemy.width,
-        enemy.height,
+        enemy.height - 20,
         enemy.x,
         enemy.y,
         enemy.responsiveWidth,
@@ -608,23 +626,7 @@ function drawScoreBoard() {
     );
 }
 
-function drawPlayer() {
-    ctx.drawImage(
-        playerImage,
-        player.width * player.frameX,
-        player.height * player.frameY,
-        player.actualW,
-        player.actualH,
-        player.x,
-        player.y,
-        player.responsiveWidth,
-        player.responsiveHeight
-    );
 
-    if (showStroke) {
-        drawSquare(player.x, player.y, playerWidth, playerHeight, 'red');
-    }
-}
 
 function drawSquare(upperLeftX, upperLeftY, rightBottomX, rightBottomY, color, thick = 1) {
     ctx.beginPath();
