@@ -35,6 +35,18 @@ skyTwo.src = "assets/sky-2.png";
 let skyOne = new Image();
 skyOne.src = "assets/sky-1.png";
 
+let jumpSound = new Audio();
+jumpSound.src = "assets/audio/jump.wav";
+
+let groundHit = new Audio();
+groundHit.src = "assets/audio/hit_ground.wav";
+
+let loose = new Audio();
+loose.src = "assets/audio/loose.wav";
+
+let winAudio = new Audio();
+winAudio.src = "assets/audio/win.wav";
+
 
 
 //--- data variables  ---//
@@ -188,6 +200,7 @@ class Player {
     jump() {
         if (checkPlayerLadder('near')) return false;
         if (!isPlayerOnGround(nearestGround)) return false;
+        playJumpSound();
         this.jumping = true;
         this.frameY = 2;
         this.moving = true;
@@ -197,6 +210,7 @@ class Player {
         if (this.jumping) {
             let hitGround = playerHeadHitOnPlatform(this.y - this.jumped);
             if (hitGround) {
+                playGroundHit();
                 this.jumped = this.maxJumpHeight;
             }
 
@@ -355,6 +369,7 @@ function initiateWindow() {
     startAnimating(15);
     // renderAnimation();
 }
+
 
 function setDimensions() {
     //set window dimensions
@@ -628,6 +643,22 @@ function getLadderHeight(from, to) {
     return getYByLevel(to) - getYByLevel(from);
 }
 
+function playJumpSound(){
+    jumpSound.play();
+}
+
+function playGroundHit(){
+    groundHit.play();
+}
+
+function playLoose(){
+    loose.play();
+}
+
+function playWin(){
+    winAudio.play();
+}
+
 function checkPlayerLadder(side) {
     let currentLadder = false;
     ladders.forEach((ladder, index) => {
@@ -846,7 +877,12 @@ function animate() {
     if (ended) {
         // stop animation when player wins or loose
         window.cancelAnimationFrame(animationId);
-        return showFail();
+        if(ended == 'failed'){
+            return showFail();
+        }
+        if(ended == 'win'){
+            showWin();
+        }
     }
 
 }
@@ -855,16 +891,15 @@ function animate() {
 
 function isEnd() {
     if (failed) {
-        return true;
+        return 'failed';
     }
     if (player.y + player.responsiveHeight >= canvasHeight) {
         failed = true;
-        return true;
+        return 'failed';
     }
-    if (isWin()) {
-        alert('Your the Winner');
-        score++;
-        return true;
+    if (isWin()) {        
+        score += 1;
+        return 'win';
     }
     return false;
 }
@@ -873,13 +908,18 @@ function isWin() {
     return checkCoordinatesInside(doorLeft - (doorLeft * 1.1), doorRight + (doorLeft * 1.1), player.x, player.x + player.responsiveWidth) && player.y + player.responsiveHeight <= doorBottom;
 }
 
-function showWinAlert() {
-    initiateWindow();
+function showWin() {
+    playWin();
+    setTimeout(() => {
+        initiateWindow();
+    }, 3000);
 }
 
 function showFail() {
-    alert('Failed');
-    location.reload();
+    playLoose();
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
     return false;
 }
 
